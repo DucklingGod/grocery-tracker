@@ -18,6 +18,14 @@
     {
       "src": "*.json",
       "use": "@vercel/static"
+    },
+    {
+      "src": "*.ttf",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.png",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
