@@ -30,13 +30,25 @@
   <!-- DASHBOARD -->
   <section id="view-dashboard" class="view active">
     <!-- Quick Actions Bar -->
-    <div class="card" style="background:#1e293b;border-color:#334155;margin-bottom:20px">
-      <h3 style="border:none;margin-bottom:8px">🎯 Quick Actions</h3>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <button onclick="document.querySelector('[data-view=quickadd]').click()" class="primary">➕ Add New Item</button>
-        <button onclick="document.querySelector('[data-view=pantry]').click()" class="secondary">🥫 View Pantry</button>
-        <button id="btnViewExpiring" class="secondary">⚠️ View Expiring Items</button>
-        <button id="btnViewResupply" class="secondary">🔄 View Items to Resupply</button>
+    <div class="card quick-actions-card">
+      <h3 style="border:none;margin-bottom:16px">🎯 Quick Actions</h3>
+      <div class="quick-actions-grid">
+        <button onclick="document.querySelector('[data-view=quickadd]').click()" class="quick-action-btn primary">
+          <span class="quick-action-icon">➕</span>
+          <span class="quick-action-text">Add New Item</span>
+        </button>
+        <button onclick="document.querySelector('[data-view=pantry]').click()" class="quick-action-btn secondary">
+          <span class="quick-action-icon">🥫</span>
+          <span class="quick-action-text">View Pantry</span>
+        </button>
+        <button id="btnViewExpiring" class="quick-action-btn secondary">
+          <span class="quick-action-icon">⚠️</span>
+          <span class="quick-action-text">View Expiring Items</span>
+        </button>
+        <button id="btnViewResupply" class="quick-action-btn secondary">
+          <span class="quick-action-icon">🔄</span>
+          <span class="quick-action-text">View Items to Resupply</span>
+        </button>
       </div>
     </div>
 
