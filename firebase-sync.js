@@ -183,54 +183,82 @@ class FirebaseHouseholdSync {
     
     console.log('👂 Listening for household changes...');
     
-    // Listen to weeklog changes individually to avoid re-rendering on own writes
+    let weeklogInitialized = false;
+    let pantryInitialized = false;
+    
+    // Listen to weeklog changes
     this.householdRef.child('data/weeklog').on('child_added', async (snapshot) => {
-      if (!this.isUpdating) {
-        console.log('📥 Weeklog item added:', snapshot.key);
-        const item = snapshot.val();
-        await tx('weeklog', 'readwrite', store => {
-          store.put(item);
-        });
+      console.log('📥 Weeklog item added:', snapshot.key);
+      const item = snapshot.val();
+      await tx('weeklog', 'readwrite', store => {
+        store.put(item);
+      });
+      
+      // Only render after initial load is complete
+      if (weeklogInitialized && !this.isUpdating) {
+        console.log('🔄 Rendering dashboard after weeklog update');
         renderDashboard();
       }
     });
     
     this.householdRef.child('data/weeklog').on('child_changed', async (snapshot) => {
+      console.log('📥 Weeklog item changed:', snapshot.key);
+      const item = snapshot.val();
+      await tx('weeklog', 'readwrite', store => {
+        store.put(item);
+      });
+      
       if (!this.isUpdating) {
-        console.log('📥 Weeklog item changed:', snapshot.key);
-        const item = snapshot.val();
-        await tx('weeklog', 'readwrite', store => {
-          store.put(item);
-        });
+        console.log('🔄 Rendering dashboard after weeklog change');
         renderDashboard();
       }
     });
     
     this.householdRef.child('data/weeklog').on('child_removed', async (snapshot) => {
+      console.log('📥 Weeklog item removed:', snapshot.key);
+      await tx('weeklog', 'readwrite', store => {
+        store.delete(Number(snapshot.key));
+      });
+      
       if (!this.isUpdating) {
-        console.log('📥 Weeklog item removed:', snapshot.key);
-        await tx('weeklog', 'readwrite', store => {
-          store.delete(Number(snapshot.key));
-        });
+        console.log('🔄 Rendering dashboard after weeklog removal');
         renderDashboard();
       }
     });
     
+    // Mark weeklog as initialized after first data load
+    this.householdRef.child('data/weeklog').once('value', () => {
+      weeklogInitialized = true;
+      console.log('✅ Weeklog initial load complete');
+      renderDashboard();
+    });
+    
     // Listen to pantry changes
     this.householdRef.child('data/pantry').on('child_added', async (snapshot) => {
-      if (!this.isUpdating) {
-        console.log('📥 Pantry item added:', snapshot.key);
-        await putPantry(snapshot.val());
+      console.log('📥 Pantry item added:', snapshot.key);
+      await putPantry(snapshot.val());
+      
+      if (pantryInitialized && !this.isUpdating) {
+        console.log('🔄 Rendering dashboard after pantry update');
         renderDashboard();
       }
     });
     
     this.householdRef.child('data/pantry').on('child_changed', async (snapshot) => {
+      console.log('📥 Pantry item changed:', snapshot.key);
+      await putPantry(snapshot.val());
+      
       if (!this.isUpdating) {
-        console.log('📥 Pantry item changed:', snapshot.key);
-        await putPantry(snapshot.val());
+        console.log('🔄 Rendering dashboard after pantry change');
         renderDashboard();
       }
+    });
+    
+    // Mark pantry as initialized after first data load
+    this.householdRef.child('data/pantry').once('value', () => {
+      pantryInitialized = true;
+      console.log('✅ Pantry initial load complete');
+      renderDashboard();
     });
     
     // Listen to device changes
