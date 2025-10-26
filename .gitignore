@@ -6,6 +6,12 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
+# API Keys and Config
+config.js
+.env
+.env.local
+set-api-key.js
+
 # OS
 .DS_Store
 Thumbs.db

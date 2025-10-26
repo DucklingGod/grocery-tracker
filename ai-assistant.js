@@ -3,10 +3,12 @@
 
 class GroceryAI {
   constructor() {
-    // API key will be set from external config
-    this.apiKey = localStorage.getItem('openaiApiKey') || '';
+    // Try to get API key from config first, then localStorage, then empty
+    this.apiKey = (window.APP_CONFIG && window.APP_CONFIG.OPENAI_API_KEY) 
+                  || localStorage.getItem('openaiApiKey') 
+                  || '';
     this.apiEndpoint = 'https://api.openai.com/v1/responses'; // New Responses API
-    this.model = 'gpt-5-mini'; // Latest GPT-5 mini model
+    this.model = (window.APP_CONFIG && window.APP_CONFIG.AI_MODEL) || 'gpt-5-mini';
     this.conversationHistory = [];
     this.previousResponseId = null;
   }
@@ -109,9 +111,13 @@ Be helpful, concise, and practical. Use Thai ingredient names when appropriate. 
       const requestBody = {
         model: this.model,
         input: input,
-        reasoning: { effort: "low" }, // Fast responses for chat
-        text: { verbosity: "medium" },
-        max_output_tokens: 1024
+        reasoning: { 
+          effort: (window.APP_CONFIG && window.APP_CONFIG.AI_REASONING_EFFORT) || "low" 
+        },
+        text: { 
+          verbosity: (window.APP_CONFIG && window.APP_CONFIG.AI_VERBOSITY) || "medium" 
+        },
+        max_output_tokens: (window.APP_CONFIG && window.APP_CONFIG.AI_MAX_TOKENS) || 1024
       };
 
       // Pass previous response ID for better context
@@ -259,8 +265,10 @@ if (typeof window !== 'undefined') {
   window.addEventListener('load', () => {
     initAI();
     
-    // Check if API key is set, otherwise show setup
-    const hasKey = localStorage.getItem('openaiApiKey');
+    // Check if API key is available from config or localStorage
+    const hasKey = (window.APP_CONFIG && window.APP_CONFIG.OPENAI_API_KEY) 
+                   || localStorage.getItem('openaiApiKey');
+    
     if (hasKey) {
       document.getElementById('aiSetup').style.display = 'none';
       document.getElementById('aiChatInterface').style.display = 'block';
