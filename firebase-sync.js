@@ -363,9 +363,28 @@ class FirebaseHouseholdSync {
         const weeklogEntries = Object.values(remoteData.weeklog);
         console.log(`📥 Merging ${weeklogEntries.length} weeklog entries...`);
         for (const entry of weeklogEntries) {
-          await tx('weeklog', 'readwrite', store => {
-            store.put(entry);
+          // Check if this entry already exists locally
+          const existing = await tx('weeklog', 'readonly', store => {
+            return new Promise((resolve) => {
+              const request = store.get(entry.id);
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => resolve(null);
+            });
           });
+          
+          if (!existing) {
+            // Entry doesn't exist locally, add it
+            console.log(`➕ Adding new weeklog entry:`, entry.id);
+            await tx('weeklog', 'readwrite', store => {
+              store.add(entry);
+            });
+          } else {
+            // Entry exists, update it
+            console.log(`🔄 Updating existing weeklog entry:`, entry.id);
+            await tx('weeklog', 'readwrite', store => {
+              store.put(entry);
+            });
+          }
         }
         console.log('✅ Weeklog merged');
       }

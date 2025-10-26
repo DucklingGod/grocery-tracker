@@ -326,6 +326,12 @@ function setupSearch(inputId, dataKey, renderFn){
 // --- Renders ---
 async function renderWeekLog(filtered=null){
   const list = filtered || await getAll('weeklog');
+  console.log('🔍 renderWeekLog called:', {
+    filtered: filtered ? 'yes' : 'no',
+    listLength: list.length,
+    firstItem: list[0],
+    tableElement: $('#weekLogTable')
+  });
   if(!filtered) currentTableData.weeklog = list;
   list.sort((a,b)=>(b.purchaseDate||b.usedDate||b.disposedDate||'')>(a.purchaseDate||a.usedDate||a.disposedDate||'')?1:-1);
   table($('#weekLogTable'), list, [
