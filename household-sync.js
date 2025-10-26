@@ -38,17 +38,16 @@ class HouseholdSync {
   async initialize() {
     // Load PeerJS from CDN
     if (typeof Peer === 'undefined') {
+      console.log('📦 Loading PeerJS...');
       await this.loadPeerJS();
+      console.log('✅ PeerJS loaded successfully');
     }
     
-    // If we have a saved household code, try to reconnect
+    // Don't auto-reconnect on page load - let user manually reconnect
+    // This prevents connection timeouts on every page load
     if (this.householdCode) {
-      const isHost = localStorage.getItem('isHost') === 'true';
-      if (isHost) {
-        await this.createHousehold(this.householdCode);
-      } else {
-        await this.joinHousehold(this.householdCode);
-      }
+      console.log('ℹ️ Previous household found:', this.householdCode);
+      console.log('ℹ️ Click "Create Household" or "Join Household" to reconnect');
     }
   }
   
@@ -107,8 +106,11 @@ class HouseholdSync {
         if (err.type === 'unavailable-id') {
           showToast('❌ Household code already in use', 'error');
           this.disconnect();
+        } else if (err.type === 'network' || err.type === 'server-error') {
+          showToast('❌ Cannot connect to PeerJS server. Check your internet connection.', 'error');
+          this.disconnect();
         } else {
-          showToast('❌ Error: ' + err.type, 'error');
+          showToast('❌ Connection error: ' + err.type, 'error');
         }
       });
       
@@ -116,8 +118,13 @@ class HouseholdSync {
       setTimeout(() => {
         if (this.peer && !this.peer.open) {
           console.error('⏱️ Timeout: Peer did not open within 10 seconds');
-          console.error('⚠️ Check if PeerJS server is accessible');
-          showToast('❌ Connection timeout. Check your internet connection.', 'error');
+          console.error('⚠️ Possible causes:');
+          console.error('   1. PeerJS server (0.peerjs.com) is not accessible');
+          console.error('   2. Firewall blocking WebRTC connections');
+          console.error('   3. No internet connection');
+          showToast('❌ Connection timeout. Cannot reach PeerJS server.', 'error');
+          // Clean up failed connection
+          this.disconnect();
         }
       }, 10000);
       
@@ -545,13 +552,22 @@ async function initHouseholdSync() {
     }
     
     if (householdSync.peer && !householdSync.peer.destroyed) {
-      console.warn('⚠️ Peer connection in progress...');
-      showToast('⚠️ Connection in progress, please wait...', 'warning');
-      return;
+      console.warn('⚠️ Cleaning up previous connection...');
+      householdSync.disconnect();
     }
     
     console.log('🎯 Create Household button clicked');
-    await householdSync.createHousehold();
+    
+    // Check if we have a saved code (user wants to reconnect as host)
+    const savedCode = localStorage.getItem('householdCode');
+    const wasHost = localStorage.getItem('isHost') === 'true';
+    
+    if (savedCode && wasHost) {
+      console.log('🔄 Reconnecting to saved household:', savedCode);
+      await householdSync.createHousehold(savedCode);
+    } else {
+      await householdSync.createHousehold();
+    }
   });
   
   document.getElementById('btnJoinHousehold').addEventListener('click', () => {
