@@ -661,9 +661,9 @@ async function renderDashboard(){
     const weekStart = new Date(d);
     weekStart.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1));
     const wkey = weekStart.toISOString().slice(0,10);
-    const label = weekStart.toISOString().slice(5,10);
-    shopLabels.push('Week '+label);
+    shopLabels.push('Week '+wkey.slice(5,10));
     shopVals.push(shopWeekly[wkey]||0);
+    console.log(`Week ${i}: d=${d.toISOString().slice(0,10)}, weekStart=${wkey}, value=${shopWeekly[wkey]||0}`);
   }
   console.log('📊 Weekly shopping chart data:', { shopLabels, shopVals, shopWeekly });
   drawBar(barShop, shopLabels, shopVals);
