@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>Grocery Tracker — Offline</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a"/>
+  <link rel="icon" href="icons/icon-192.png"/>
+  <link rel="apple-touch-icon" href="icons/icon-192.png"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🛒 Grocery Tracker</div>
+  <nav class="nav">
+    <button data-view="dashboard" class="nav-btn active">📊 Dashboard</button>
+    <button data-view="quickadd" class="nav-btn">➕ Quick Add</button>
+    <button data-view="weeklog" class="nav-btn">📋 Week Log</button>
+    <button data-view="pantry" class="nav-btn">🥫 Pantry</button>
+    <button data-view="waste" class="nav-btn">🗑 Waste Log</button>
+    <button data-view="settings" class="nav-btn">⚙️ Settings</button>
+  </nav>
+</header>
+
+<main id="app">
+  <!-- DASHBOARD -->
+  <section id="view-dashboard" class="view active">
+    <!-- Quick Actions Bar -->
+    <div class="card" style="background:#1e293b;border-color:#334155;margin-bottom:20px">
+      <h3 style="border:none;margin-bottom:8px">🎯 Quick Actions</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button onclick="document.querySelector('[data-view=quickadd]').click()" class="primary">➕ Add New Item</button>
+        <button onclick="document.querySelector('[data-view=pantry]').click()" class="secondary">🥫 View Pantry</button>
+        <button id="btnViewExpiring" class="secondary">⚠️ View Expiring Items</button>
+        <button id="btnViewResupply" class="secondary">🔄 View Items to Resupply</button>
+      </div>
+    </div>
+
+    <!-- KPIs Section -->
+    <div class="card" style="margin-bottom:20px">
+      <h3>📊 Key Metrics (Last 7 days)</h3>
+      <div class="kpis">
+        <div class="kpi kpi-clickable" onclick="document.getElementById('btnViewResupply').click()" title="Click to view items">
+          <div class="kpi-label">🔄 To Resupply</div>
+          <div id="kpiResupply" class="kpi-value">0</div>
+          <div class="kpi-trend">Low stock items</div>
+        </div>
+        <div class="kpi kpi-clickable" onclick="document.getElementById('btnViewExpiring').click()" title="Click to view items">
+          <div class="kpi-label">⚠️ Expiring Soon</div>
+          <div id="kpiExpSoon" class="kpi-value">0</div>
+          <div class="kpi-trend">≤3 days remaining</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">🍳 Cooking Cost</div>
+          <div id="kpiCookCost" class="kpi-value">0</div>
+          <div id="trendCookCost" class="kpi-trend">฿ this week</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">🛒 Shopping Total</div>
+          <div id="kpiShoppingTotal" class="kpi-value">0</div>
+          <div class="kpi-trend">฿ this week</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">🗑️ Waste Items</div>
+          <div id="kpiWasteEntries" class="kpi-value">0</div>
+          <div class="kpi-trend">entries</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">💸 Waste Cost</div>
+          <div id="kpiWasteCost" class="kpi-value">0</div>
+          <div id="trendWasteCost" class="kpi-trend">฿ lost</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">📉 Waste Ratio</div>
+          <div id="kpiWasteRatio" class="kpi-value">0%</div>
+          <div class="kpi-trend">of total spend</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">🥫 Pantry Items</div>
+          <div id="kpiPantryCount" class="kpi-value">0</div>
+          <div class="kpi-trend">in stock</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid">
+      <div class="card">
+        <h3>🍳 Daily Cooking Cost (฿)</h3>
+        <div class="chart-summary" id="cookSummary"></div>
+        <canvas id="barDailyCook" width="600" height="260"></canvas>
+      </div>
+      <div class="card">
+        <h3>🛒 Weekly Grocery Shopping (฿)</h3>
+        <div class="chart-summary" id="shopSummary"></div>
+        <canvas id="barWeeklyShopping" width="600" height="260"></canvas>
+      </div>
+      <div class="card">
+        <h3>📊 Spending Analysis</h3>
+        <div class="chart-summary" id="spendSummary"></div>
+        <canvas id="pieSpendWaste" width="400" height="260"></canvas>
+      </div>
+      <div class="card">
+        <h3>📈 Top Categories by Spend</h3>
+        <div id="topCategories" class="category-list"></div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card" style="margin-top:20px">
+      <h3>🕐 Recent Activity</h3>
+      <div id="recentActivity" class="activity-list"></div>
+    </div>
+  </section>
+
+  <!-- QUICK ADD -->
+  <section id="view-quickadd" class="view">
+    <div class="card">
+      <h3>Quick Add Entry</h3>
+      <form id="quickForm">
+        <div class="form-row">
+          <div class="form-field">
+            <label class="required">Action Type</label>
+            <select id="qaAction" required>
+              <option value="">— Select Action —</option>
+              <option value="Buy">🛒 Buy</option>
+              <option value="Use">✓ Use</option>
+              <option value="Waste">🗑 Waste</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row triple">
+          <div>
+            <label>Category</label>
+            <select id="qaCategory">
+              <option value="">— Select Category —</option>
+              <option value="Meat & Poultry">🥩 Meat & Poultry</option>
+              <option value="Seafood">🐟 Seafood</option>
+              <option value="Vegetables">🥬 Vegetables</option>
+              <option value="Fruits">🍎 Fruits</option>
+              <option value="Dairy & Eggs">🥛 Dairy & Eggs</option>
+              <option value="Grains & Bread">🍞 Grains & Bread</option>
+              <option value="Pasta & Noodles">🍝 Pasta & Noodles</option>
+              <option value="Herbs & Spices">🌿 Herbs & Spices</option>
+              <option value="Condiments & Sauces">🧂 Condiments & Sauces</option>
+              <option value="Oils & Fats">🫒 Oils & Fats</option>
+              <option value="Canned & Jarred">🥫 Canned & Jarred</option>
+              <option value="Frozen Foods">🧊 Frozen Foods</option>
+              <option value="Snacks">🍿 Snacks</option>
+              <option value="Beverages">🥤 Beverages</option>
+              <option value="Baking Supplies">🧁 Baking Supplies</option>
+              <option value="Other">📦 Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="required">Item Name</label>
+            <input id="qaItem" placeholder="e.g., หมูสับ" list="itemSuggestions" required autocomplete="off"/>
+            <datalist id="itemSuggestions"></datalist>
+          </div>
+          <div>
+            <label>Unit</label>
+            <select id="qaUnit">
+              <option value="">— Select Unit —</option>
+              <option value="kg">kg (กิโลกรัม)</option>
+              <option value="g">g (กรัม)</option>
+              <option value="L">L (ลิตร)</option>
+              <option value="ml">ml (มิลลิลิตร)</option>
+              <option value="pcs">pcs (ชิ้น)</option>
+              <option value="pack">pack (แพ็ค)</option>
+              <option value="bag">bag (ถุง)</option>
+              <option value="box">box (กล่อง)</option>
+              <option value="bottle">bottle (ขวด)</option>
+              <option value="can">can (กระป๋อง)</option>
+              <option value="bunch">bunch (มัด)</option>
+              <option value="head">head (หัว)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Buy Fields -->
+        <div id="buyFields" class="form-row triple hidden">
+          <div><label class="required">Purchase Date</label><input id="qaPurchase" type="date"/></div>
+          <div><label class="required">Bought Qty</label><input id="qaBought" type="number" min="0" step="0.001" placeholder="e.g., 0.454"/></div>
+          <div><label class="required">Total Price (฿)</label><input id="qaTotalPrice" type="number" min="0" step="0.01" placeholder="e.g., 104.42"/></div>
+        </div>
+        <div id="buyFields2" class="form-row triple hidden">
+          <div><label>Price per Unit (฿)</label><input id="qaPrice" type="number" min="0" step="0.01" readonly style="background:#1a2332"/></div>
+          <div><label>Expiration Date</label><input id="qaExpire" type="date"/></div>
+          <div><label>Resupply Threshold</label><input id="qaThreshold" type="number" min="0" step="0.01"/></div>
+        </div>
+        <div id="buyFields3" class="form-row triple hidden">
+          <div><label>Planned Use Qty</label><input id="qaPlan" type="number" min="0" step="0.01"/></div>
+          <div></div>
+          <div></div>
+        </div>
+
+        <!-- Use Fields -->
+        <div id="useFields" class="form-row triple hidden">
+          <div><label class="required">Used Qty</label><input id="qaUsed" type="number" min="0" step="0.01"/></div>
+          <div><label>Used Date</label><input id="qaUsedDate" type="date"/></div>
+          <div></div>
+        </div>
+
+        <!-- Waste Fields -->
+        <div id="wasteFields" class="form-row triple hidden">
+          <div><label class="required">Wasted Qty</label><input id="qaWasted" type="number" min="0" step="0.01"/></div>
+          <div><label>Disposed Date</label><input id="qaDisposed" type="date"/></div>
+          <div><label>Waste Reason</label><input id="qaReason" placeholder="expired/spoiled/etc."/></div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="primary">💾 Save Entry</button>
+          <button type="button" id="btnClear" class="secondary">Clear Form</button>
+          <button type="button" id="btnDuplicateLast" class="secondary">📋 Duplicate Last Entry</button>
+        </div>
+      </form>
+      <p class="hint">💡 Tip: Select an action type to see relevant fields. Required fields are marked with *</p>
+      <div class="hint" style="margin-top:16px">
+        ⌨️ <strong>Keyboard Shortcuts:</strong> Alt+1 (Dashboard) • Alt+2 (Quick Add) • Alt+3 (Week Log) • Alt+4 (Pantry) • Alt+5 (Waste) • Alt+6 (Settings) • Ctrl+S (Save Form)
+      </div>
+    </div>
+  </section>
+
+  <!-- WEEK LOG -->
+  <section id="view-weeklog" class="view">
+    <div class="card">
+      <h3>📋 Week Log - All Transactions</h3>
+      <div class="table-controls">
+        <input type="text" id="searchWeekLog" placeholder="🔍 Search by item, category, or action..."/>
+      </div>
+      <div id="weekLogTable" class="table"></div>
+    </div>
+  </section>
+
+  <!-- PANTRY -->
+  <section id="view-pantry" class="view">
+    <div class="card">
+      <h3>🥫 Current Pantry Inventory</h3>
+      <div class="table-controls">
+        <input type="text" id="searchPantry" placeholder="🔍 Search pantry items..."/>
+        <button id="btnQuickUse" class="secondary small">⚡ Quick Use</button>
+      </div>
+      <div id="pantryTable" class="table"></div>
+    </div>
+  </section>
+
+  <!-- WASTE LOG -->
+  <section id="view-waste" class="view">
+    <div class="card">
+      <h3>🗑 Waste Tracking Log</h3>
+      <div class="table-controls">
+        <input type="text" id="searchWaste" placeholder="🔍 Search waste entries..."/>
+      </div>
+      <div id="wasteTable" class="table"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="view-settings" class="view">
+    <div class="card">
+      <h3>⚙️ Settings & Data Management</h3>
+      
+      <!-- Household Sync -->
+      <div style="margin-bottom:24px">
+        <h4 style="color:#9ca3af;font-size:14px;margin-bottom:12px">🏠 Household Sync</h4>
+        <p style="color:#6b7280;font-size:13px;margin-bottom:12px">Share your pantry with household members in real-time. All devices will stay synchronized.</p>
+        
+        <div id="householdNotConnected">
+          <div class="form-row">
+            <button id="btnCreateHousehold" class="primary">🏠 Create New Household</button>
+            <button id="btnJoinHousehold" class="secondary">🔗 Join Existing Household</button>
+          </div>
+        </div>
+        
+        <div id="householdConnected" style="display:none">
+          <div style="background:#0f172a;padding:16px;border-radius:12px;border:1px solid #1f2937;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="color:#9ca3af;font-size:13px">Household Code:</span>
+              <span style="color:#10b981;font-size:11px" id="syncStatus">● Connected</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <code id="householdCode" style="flex:1;background:#1f2937;padding:12px;border-radius:8px;font-size:16px;font-weight:700;letter-spacing:2px;color:#60a5fa;text-align:center">------</code>
+              <button id="btnCopyCode" class="small secondary" title="Copy code">📋</button>
+            </div>
+            <p style="color:#6b7280;font-size:11px;margin-top:8px">Share this code with household members to let them join</p>
+          </div>
+          
+          <div style="background:#0f172a;padding:12px;border-radius:8px;border:1px solid #1f2937;margin-bottom:12px">
+            <div style="font-size:12px;color:#9ca3af;margin-bottom:8px">Connected Devices: <span id="deviceCount" style="color:#60a5fa;font-weight:600">1</span></div>
+            <div id="deviceList" style="font-size:11px;color:#6b7280"></div>
+          </div>
+          
+          <div class="form-row">
+            <button id="btnLeaveHousehold" class="danger small">🚪 Leave Household</button>
+            <button id="btnSyncNow" class="secondary small">🔄 Sync Now</button>
+          </div>
+        </div>
+        
+        <!-- Join Dialog (hidden by default) -->
+        <div id="joinDialog" style="display:none;background:#0f172a;padding:16px;border-radius:12px;border:1px solid #1f2937;margin-top:12px">
+          <h4 style="color:#e5e7eb;font-size:14px;margin-bottom:12px">Enter Household Code</h4>
+          <div class="form-row">
+            <input type="text" id="joinCode" placeholder="Enter 6-digit code" maxlength="6" style="flex:1;text-transform:uppercase;letter-spacing:2px;font-size:16px;font-weight:600;text-align:center"/>
+          </div>
+          <div class="form-row">
+            <button id="btnConfirmJoin" class="primary small">✓ Join</button>
+            <button id="btnCancelJoin" class="secondary small">✕ Cancel</button>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-bottom:24px">
+        <h4 style="color:#9ca3af;font-size:14px;margin-bottom:12px">Data Backup</h4>
+        <div class="form-row">
+          <button id="btnExport" class="secondary">📥 Export JSON Backup</button>
+        </div>
+        <div class="form-row" style="align-items:center">
+          <input type="file" id="fileImport" accept="application/json" style="flex:1;max-width:300px"/>
+          <button id="btnImport" class="secondary">📤 Import JSON</button>
+        </div>
+      </div>
+      <div>
+        <h4 style="color:#9ca3af;font-size:14px;margin-bottom:12px">Danger Zone</h4>
+        <div class="form-row">
+          <button id="btnWipe" class="danger">🗑 Erase All Data (local)</button>
+        </div>
+      </div>
+      <p class="hint">💾 All data is stored locally in your browser (IndexedDB). Household sync uses peer-to-peer connection when devices are nearby. Regular backups are recommended!</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">© 2025 Grocery Tracker • Offline-first PWA</footer>
+
+<script src="charts.js"></script>
+<script src="household-sync.js"></script>
+<script src="app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js');
+    });
+  }
+</script>
+</body>
+</html>

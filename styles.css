@@ -1,0 +1,249 @@
+/* Reset & Base */
+*{box-sizing:border-box;margin:0;padding:0}
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#0b1220;color:#e5e7eb;line-height:1.6;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+input,select,button,textarea{-webkit-tap-highlight-color:transparent}
+
+/* Header */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:#0f172a;border-bottom:1px solid #1f2937;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.brand{font-size:20px;font-weight:700;letter-spacing:.5px;color:#60a5fa}
+.nav{display:flex;gap:4px;flex-wrap:wrap}
+.nav-btn{background:transparent;border:0;color:#cbd5e1;padding:10px 16px;margin:0;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;transition:all .2s ease;white-space:nowrap}
+.nav-btn:hover{color:#fff;background:#1e293b;transform:translateY(-1px)}
+.nav-btn.active{color:#fff;background:#1f2937;box-shadow:inset 0 2px 4px rgba(0,0,0,.3)}
+
+/* Main Layout */
+main{padding:24px;max-width:1400px;margin:0 auto;min-height:calc(100vh - 140px)}
+.grid{display:grid;grid-template-columns:1fr;gap:20px}
+@media(min-width:768px){.grid{grid-template-columns:1fr 1fr}}
+@media(min-width:1200px){.grid{grid-template-columns:repeat(2,1fr)}}
+
+/* Cards */
+.card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.4);transition:box-shadow .3s ease}
+.card:hover{box-shadow:0 6px 32px rgba(0,0,0,.5)}
+.card.full-width{grid-column:1/-1}
+h3{margin:0 0 20px 0;color:#fff;font-size:18px;font-weight:600;border-bottom:2px solid #1f2937;padding-bottom:12px}
+
+/* KPIs */
+.kpis{display:flex;flex-wrap:wrap;gap:12px}
+.kpi{flex:1 1 140px;background:#0f172a;border:1px solid #243041;border-radius:12px;padding:16px;transition:all .2s ease;min-width:140px}
+.kpi:hover{border-color:#334155;transform:translateY(-2px)}
+.kpi-clickable{cursor:pointer}
+.kpi-clickable:hover{border-color:#2563eb;background:#1e293b}
+.kpi-label{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.kpi-value{font-size:32px;font-weight:700;margin-top:8px;color:#60a5fa}
+.kpi-trend{font-size:11px;color:#6b7280;margin-top:4px}
+
+/* Chart Summary */
+.chart-summary{font-size:13px;color:#9ca3af;margin-bottom:12px;padding:8px 12px;background:#0f172a;border-radius:8px;border-left:3px solid #2563eb}
+
+/* Category List */
+.category-list{max-height:240px;overflow-y:auto}
+.category-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;margin:6px 0;background:#0f172a;border-radius:8px;border-left:3px solid #60a5fa;transition:all .2s ease}
+.category-item:hover{background:#1e293b;transform:translateX(4px)}
+.category-name{font-weight:600;color:#e5e7eb}
+.category-amount{color:#60a5fa;font-weight:700}
+.category-bar{height:4px;background:#1f2937;border-radius:2px;margin-top:6px;overflow:hidden}
+.category-bar-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:2px;transition:width .3s ease}
+
+/* Activity List */
+.activity-list{max-height:300px;overflow-y:auto}
+.activity-item{display:flex;align-items:center;gap:12px;padding:12px;margin:6px 0;background:#0f172a;border-radius:8px;transition:all .2s ease}
+.activity-item:hover{background:#1e293b}
+.activity-icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:#1f2937;flex-shrink:0}
+.activity-icon.buy{background:#1e40af;color:#93c5fd}
+.activity-icon.use{background:#065f46;color:#6ee7b7}
+.activity-icon.waste{background:#991b1b;color:#fca5a5}
+.activity-content{flex:1;min-width:0}
+.activity-title{font-weight:600;color:#e5e7eb;font-size:14px}
+.activity-desc{font-size:12px;color:#9ca3af;margin-top:2px}
+.activity-time{font-size:11px;color:#6b7280;white-space:nowrap}
+
+/* Forms */
+.form-row{display:flex;gap:12px;align-items:flex-start;margin:16px 0;flex-wrap:wrap}
+.form-row.triple{gap:16px}
+.form-row.triple>div{flex:1;min-width:180px}
+.form-field{flex:1;min-width:200px}
+label{display:block;font-size:13px;color:#9ca3af;margin-bottom:6px;font-weight:500}
+label.required::after{content:" *";color:#ef4444}
+input,select{width:100%;border-radius:10px;border:1px solid #334155;background:#0b1220;color:#e5e7eb;padding:12px 14px;font-size:14px;transition:all .2s ease}
+input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+input::placeholder{color:#6b7280}
+input:disabled,select:disabled{opacity:.5;cursor:not-allowed}
+.form-row.hidden{display:none}
+
+/* Buttons */
+button{border-radius:10px;border:1px solid transparent;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s ease;white-space:nowrap}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.primary{background:#2563eb;border-color:#2563eb;color:#fff}
+button.primary:hover:not(:disabled){background:#1d4ed8;transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.4)}
+button.secondary{background:#374151;border-color:#374151;color:#e5e7eb}
+button.secondary:hover:not(:disabled){background:#4b5563;transform:translateY(-1px)}
+button.danger{background:#dc2626;border-color:#dc2626;color:#fff}
+button.danger:hover:not(:disabled){background:#b91c1c;transform:translateY(-1px)}
+button.small{padding:6px 12px;font-size:12px}
+button.small+button.small{margin-left:4px}
+.form-actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+
+/* Tables */
+.table-controls{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.table-controls input{flex:1;min-width:200px;max-width:400px}
+.table{overflow:auto;border:1px solid #1f2937;border-radius:12px;max-height:600px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:12px 16px;border-bottom:1px solid #1f2937;text-align:left}
+th{position:sticky;top:0;background:#0f172a;font-weight:600;color:#9ca3af;text-transform:uppercase;font-size:11px;letter-spacing:.5px;z-index:10;cursor:pointer;user-select:none}
+th:hover{background:#1e293b}
+th.sortable::after{content:" ↕";opacity:.3}
+td{color:#cbd5e1}
+tr:hover td{background:#0f172a}
+.empty-state{padding:40px;text-align:center;color:#6b7280}
+.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:.3}
+
+/* Badges */
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.badge.yes{background:#dc2626;color:#fff}
+.badge.warn{background:#f59e0b;color:#fff}
+.badge.info{background:#3b82f6;color:#fff}
+.badge.success{background:#10b981;color:#fff}
+.badge.expired{background:#ef4444;color:#fff}
+.badge.soon{background:#f59e0b;color:#fff}
+
+/* Notifications */
+.toast{position:fixed;bottom:24px;right:24px;background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:1000;animation:slideIn .3s ease;max-width:400px}
+.toast.success{border-left:4px solid #10b981}
+.toast.error{border-left:4px solid #ef4444}
+.toast.info{border-left:4px solid #3b82f6}
+@keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Views */
+.view{display:none;animation:fadeIn .3s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* Footer */
+.foot{padding:24px;color:#6b7280;text-align:center;font-size:13px}
+.hint{color:#9ca3af;font-size:13px;margin-top:12px;padding:12px;background:#0f172a;border-radius:8px;border-left:3px solid #334155}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:#6b7280}
+.spinner{display:inline-block;width:40px;height:40px;border:3px solid #1f2937;border-top-color:#60a5fa;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Responsive */
+@media(max-width:768px){
+  /* Header - Stack navigation */
+  .topbar{padding:12px 16px;flex-direction:column;align-items:stretch;gap:12px}
+  .brand{font-size:18px;text-align:center}
+  .nav{width:100%;justify-content:center;gap:6px}
+  .nav-btn{padding:10px 14px;font-size:12px;flex:1;text-align:center;min-width:0}
+  
+  /* Main Layout - Single column, optimized spacing */
+  main{padding:12px;padding-bottom:80px}
+  
+  /* Cards - Adjusted padding and margins */
+  .card{padding:16px;margin-bottom:12px;border-radius:12px}
+  h3{font-size:16px;margin-bottom:16px;padding-bottom:10px}
+  
+  /* KPIs - 2 columns on mobile, better fit */
+  .kpis{gap:8px}
+  .kpi{flex:1 1 calc(50% - 4px);min-width:0;padding:12px}
+  .kpi-label{font-size:10px}
+  .kpi-value{font-size:24px;margin-top:6px}
+  .kpi-trend{font-size:10px}
+  
+  /* Charts - Full width, adjusted height */
+  .grid{gap:12px}
+  canvas{max-width:100%;height:auto !important}
+  
+  /* Chart Summary - Smaller text, more compact */
+  .chart-summary{font-size:11px;padding:6px 10px;margin-bottom:10px}
+  
+  /* Category List - More compact */
+  .category-list{max-height:200px}
+  .category-item{padding:8px 10px;margin:4px 0}
+  .category-name{font-size:13px}
+  .category-amount{font-size:13px}
+  
+  /* Activity List - More compact */
+  .activity-list{max-height:250px}
+  .activity-item{gap:10px;padding:10px}
+  .activity-icon{width:36px;height:36px;font-size:16px}
+  .activity-title{font-size:13px}
+  .activity-desc{font-size:11px}
+  .activity-time{font-size:10px}
+  
+  /* Forms - Single column */
+  .form-row{flex-direction:column;gap:12px;margin:12px 0}
+  .form-field{min-width:100%}
+  .form-row.triple>div{min-width:100%}
+  label{font-size:12px;margin-bottom:4px}
+  input,select{padding:10px 12px;font-size:14px}
+  
+  /* Buttons - Full width on mobile for better tap targets */
+  .form-actions{flex-direction:column}
+  .form-actions button{width:100%}
+  button{padding:12px 16px;font-size:14px}
+  button.small{padding:8px 12px;font-size:12px}
+  
+  /* Tables - Horizontal scroll, compact */
+  .table-controls{flex-direction:column}
+  .table-controls input{max-width:100%}
+  .table{border-radius:8px;max-height:400px}
+  table{font-size:12px;min-width:600px}
+  th,td{padding:8px 10px;font-size:12px}
+  th{font-size:10px}
+  
+  /* Badges - Smaller */
+  .badge{padding:3px 8px;font-size:10px}
+  
+  /* Toast - Bottom, full width */
+  .toast{bottom:12px;right:12px;left:12px;max-width:none;padding:14px 16px;font-size:13px}
+  
+  /* Empty state - Smaller */
+  .empty-state{padding:30px 20px}
+  .empty-state-icon{font-size:36px}
+  
+  /* Footer */
+  .foot{padding:16px;font-size:12px}
+  .hint{font-size:12px;padding:10px;margin-top:10px}
+  
+  /* Quick Add Action Buttons - Stack vertically */
+  .table-controls button{width:100%;margin-bottom:8px}
+  
+  /* Mobile-specific: Hide desktop-only spacing */
+  .card:first-child{margin-top:0}
+  
+  /* Mobile-specific: Optimize dashboard order */
+  #viewDashboard .card:nth-child(1){order:1} /* KPIs first */
+  #viewDashboard .card:nth-child(2){order:4} /* Daily cooking chart */
+  #viewDashboard .card:nth-child(3){order:5} /* Weekly shopping chart */
+  #viewDashboard .card:nth-child(4){order:3} /* Top categories */
+  #viewDashboard .card:nth-child(5){order:2} /* Recent activity (more important on mobile) */
+  #viewDashboard .card:nth-child(6){order:6} /* Pie chart */
+  
+  /* Make dashboard a flex container for reordering */
+  #viewDashboard{display:flex;flex-direction:column}
+}
+
+/* Tablet specific - 2 column KPIs, better spacing */
+@media(min-width:481px) and (max-width:768px){
+  .kpi{flex:1 1 calc(50% - 6px)}
+  .nav-btn{flex:0 1 auto}
+}
+
+/* Very small phones - Single column KPIs */
+@media(max-width:480px){
+  .kpis{flex-direction:column}
+  .kpi{flex:1 1 100%;min-width:100%}
+  .nav{flex-wrap:wrap}
+  .nav-btn{flex:1 1 calc(50% - 3px);font-size:11px;padding:8px 10px}
+}
+
+/* Landscape mobile - Adjust for wide but short screens */
+@media(max-height:500px) and (orientation:landscape){
+  main{padding:8px}
+  .card{padding:12px;margin-bottom:8px}
+  .kpi{padding:10px}
+  .kpi-value{font-size:20px}
+  .activity-list{max-height:150px}
+  .category-list{max-height:150px}
+}

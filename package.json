@@ -1,0 +1,11 @@
+{
+  "name": "grocery-offline-webapp",
+  "version": "1.0.0",
+  "description": "Grocery Tracker — Offline PWA (static site)",
+  "scripts": {
+    "start": "npx --yes http-server -p 8080 -c-1 .",
+    "start:8000": "npx --yes http-server -p 8000 -c-1 ."
+  },
+  "author": "",
+  "license": "MIT"
+}
