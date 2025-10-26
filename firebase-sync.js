@@ -203,8 +203,10 @@ class FirebaseHouseholdSync {
       
       // Only render after initial load is complete
       if (weeklogInitialized && !this.isUpdating) {
-        console.log('🔄 Rendering dashboard after weeklog update');
-        renderDashboard();
+        console.log('🔄 Rendering all views after weeklog update');
+        await renderDashboard();
+        await renderWeekLog();
+        await renderPantry();
       }
     });
     
@@ -216,8 +218,9 @@ class FirebaseHouseholdSync {
       });
       
       if (!this.isUpdating) {
-        console.log('🔄 Rendering dashboard after weeklog change');
-        renderDashboard();
+        console.log('🔄 Rendering all views after weeklog change');
+        await renderDashboard();
+        await renderWeekLog();
       }
     });
     
@@ -228,17 +231,21 @@ class FirebaseHouseholdSync {
       });
       
       if (!this.isUpdating) {
-        console.log('🔄 Rendering dashboard after weeklog removal');
-        renderDashboard();
+        console.log('🔄 Rendering all views after weeklog removal');
+        await renderDashboard();
+        await renderWeekLog();
       }
     });
     
     // Mark weeklog as initialized after first data load
     this.householdRef.child('data/weeklog').once('value', async () => {
       weeklogInitialized = true;
-      console.log('✅ Weeklog initial load complete, rendering...');
+      console.log('✅ Weeklog initial load complete, rendering all views...');
       await renderDashboard();
-      console.log('✅ Dashboard rendered after weeklog init');
+      await renderWeekLog();
+      await renderPantry();
+      await renderWaste();
+      console.log('✅ All views rendered after weeklog init');
     });
     
     // Listen to pantry changes
@@ -265,9 +272,12 @@ class FirebaseHouseholdSync {
     // Mark pantry as initialized after first data load
     this.householdRef.child('data/pantry').once('value', async () => {
       pantryInitialized = true;
-      console.log('✅ Pantry initial load complete, rendering...');
+      console.log('✅ Pantry initial load complete, rendering all views...');
       await renderDashboard();
-      console.log('✅ Dashboard rendered after pantry init');
+      await renderWeekLog();
+      await renderPantry();
+      await renderWaste();
+      console.log('✅ All views rendered after pantry init');
     });
     
     // Listen to device changes
@@ -370,9 +380,12 @@ class FirebaseHouseholdSync {
         console.log('✅ Pantry merged');
       }
       
-      console.log('✅ Data merged successfully, rendering dashboard...');
+      console.log('✅ Data merged successfully, rendering all views...');
       await renderDashboard();
-      console.log('✅ Dashboard rendered after merge');
+      await renderWeekLog();
+      await renderPantry();
+      await renderWaste();
+      console.log('✅ All views rendered after merge');
     } catch (err) {
       console.error('❌ Failed to merge data:', err);
     }
