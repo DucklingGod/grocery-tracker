@@ -108,11 +108,12 @@ tr:hover td{background:#0f172a}
 .badge.soon{background:#f59e0b;color:#fff}
 
 /* Notifications */
-.toast{position:fixed;bottom:24px;right:24px;background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:1000;animation:slideIn .3s ease;max-width:400px}
+.toast{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px 20px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:slideIn .3s ease;max-width:400px;min-width:300px}
 .toast.success{border-left:4px solid #10b981}
 .toast.error{border-left:4px solid #ef4444}
 .toast.info{border-left:4px solid #3b82f6}
 @keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(400px);opacity:0}}
 
 /* Views */
 .view{display:none;animation:fadeIn .3s ease}
@@ -195,8 +196,9 @@ tr:hover td{background:#0f172a}
   /* Badges - Smaller */
   .badge{padding:3px 8px;font-size:10px}
   
-  /* Toast - Bottom, full width */
-  .toast{bottom:12px;right:12px;left:12px;max-width:none;padding:14px 16px;font-size:13px}
+  /* Toast container - Mobile adjustments */
+  #toast-container{bottom:12px!important;right:12px!important;left:12px!important;width:auto!important}
+  .toast{max-width:none;min-width:auto;padding:14px 16px;font-size:13px}
   
   /* Empty state - Smaller */
   .empty-state{padding:30px 20px}

@@ -4,11 +4,32 @@ const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
 // --- Toast Notifications ---
 function showToast(message, type='info'){
+  // Create toast container if it doesn't exist
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:1000;display:flex;flex-direction:column;gap:12px;pointer-events:none;';
+    document.body.appendChild(toastContainer);
+  }
+  
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.textContent = message;
-  document.body.appendChild(toast);
-  setTimeout(()=>{ toast.remove(); }, 3000);
+  toast.style.cssText = 'pointer-events:auto;';
+  
+  toastContainer.appendChild(toast);
+  
+  setTimeout(()=>{ 
+    toast.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => {
+      toast.remove();
+      // Remove container if empty
+      if (toastContainer.children.length === 0) {
+        toastContainer.remove();
+      }
+    }, 300);
+  }, 3000);
 }
 
 // --- Keyboard Shortcuts ---
