@@ -2,7 +2,7 @@
 // Much more reliable than P2P WebRTC
 
 // Helper function for IndexedDB transactions with callback pattern
-function tx(storeName, mode, callback) {
+async function tx(storeName, mode, callback) {
   return new Promise((resolve, reject) => {
     try {
       if (!db) {
@@ -11,13 +11,15 @@ function tx(storeName, mode, callback) {
       }
       const transaction = db.transaction(storeName, mode);
       const store = transaction.objectStore(storeName);
+      
+      // Execute the callback and get the result
       const result = callback(store);
       
-      if (result && result.then) {
-        // If callback returns a promise, wait for it
+      // If callback returns a promise, wait for it
+      if (result && typeof result.then === 'function') {
         result.then(resolve).catch(reject);
       } else {
-        // Otherwise just resolve
+        // Wait for transaction to complete
         transaction.oncomplete = () => resolve(result);
         transaction.onerror = () => reject(transaction.error);
       }
@@ -389,36 +391,49 @@ class FirebaseHouseholdSync {
         const weeklogEntries = Object.values(remoteData.weeklog);
         console.log(`📥 Merging ${weeklogEntries.length} weeklog entries...`);
         
+        // Use a single transaction for all entries
+        const transaction = db.transaction('weeklog', 'readwrite');
+        const store = transaction.objectStore('weeklog');
+        
+        let successCount = 0;
+        let errorCount = 0;
+        
+        // Add all entries
         for (const entry of weeklogEntries) {
-          try {
-            // Always use put() which will add OR update
-            await tx('weeklog', 'readwrite', store => {
-              return new Promise((resolve, reject) => {
-                const request = store.put(entry);
-                request.onsuccess = () => {
-                  console.log(`✅ Weeklog entry ${entry.id} saved successfully`);
-                  resolve(request.result);
-                };
-                request.onerror = (e) => {
-                  console.error(`❌ Failed to save weeklog ${entry.id}:`, e.target.error);
-                  reject(e.target.error);
-                };
-              });
-            });
-          } catch (err) {
-            console.error(`❌ Error processing weeklog entry ${entry.id}:`, err);
-          }
+          const request = store.put(entry);
+          request.onsuccess = () => {
+            successCount++;
+            console.log(`✅ Weeklog entry ${entry.id} saved (${successCount}/${weeklogEntries.length})`);
+          };
+          request.onerror = (e) => {
+            errorCount++;
+            console.error(`❌ Failed to save weeklog ${entry.id}:`, e.target.error);
+          };
         }
         
-        // Verify the data was actually saved
-        const savedCount = await tx('weeklog', 'readonly', store => {
-          return new Promise((resolve) => {
-            const request = store.count();
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => resolve(0);
-          });
+        // Wait for transaction to complete
+        await new Promise((resolve, reject) => {
+          transaction.oncomplete = () => {
+            console.log(`✅ Weeklog transaction complete - ${successCount} saved, ${errorCount} errors`);
+            resolve();
+          };
+          transaction.onerror = (e) => {
+            console.error(`❌ Weeklog transaction failed:`, e.target.error);
+            reject(e.target.error);
+          };
         });
-        console.log(`✅ Weeklog merged - ${savedCount} entries in IndexedDB`);
+        
+        // Verify the data was actually saved
+        const verifyTransaction = db.transaction('weeklog', 'readonly');
+        const verifyStore = verifyTransaction.objectStore('weeklog');
+        const countRequest = verifyStore.count();
+        
+        const savedCount = await new Promise((resolve) => {
+          countRequest.onsuccess = () => resolve(countRequest.result);
+          countRequest.onerror = () => resolve(0);
+        });
+        
+        console.log(`✅ Weeklog merged - ${savedCount} total entries in IndexedDB`);
       }
       
       // Merge pantry
