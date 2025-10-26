@@ -44,6 +44,43 @@ class FirebaseHouseholdSync {
     this.db = firebase.database();
     console.log('✅ Firebase initialized');
     
+    // If we have a saved household, reconnect to it
+    if (this.householdCode) {
+      const isHost = localStorage.getItem('isHost') === 'true';
+      console.log('🔄 Reconnecting to household:', this.householdCode, isHost ? '(Host)' : '(Member)');
+      
+      this.householdRef = this.db.ref('households/' + this.householdCode);
+      this.isHost = isHost;
+      
+      // Check if household still exists
+      try {
+        const snapshot = await this.householdRef.once('value');
+        if (snapshot.exists()) {
+          // Rejoin the household
+          await this.householdRef.child('devices/' + this.deviceId).set({
+            name: this.deviceName,
+            isHost: isHost,
+            lastSeen: Date.now()
+          });
+          
+          // Start listening for changes
+          this.startListening();
+          this.startPresenceUpdates();
+          
+          console.log('✅ Reconnected to household');
+          showToast('🔄 Reconnected to household', 'success');
+        } else {
+          // Household no longer exists
+          console.warn('⚠️ Household no longer exists, clearing...');
+          this.householdCode = null;
+          localStorage.removeItem('householdCode');
+          localStorage.removeItem('isHost');
+        }
+      } catch (err) {
+        console.error('❌ Failed to reconnect:', err);
+      }
+    }
+    
     this.updateUI();
   }
   
