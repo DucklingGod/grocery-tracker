@@ -1,5 +1,5 @@
 // AI Assistant for Grocery Tracker
-// Uses Groq API (free tier) for fast LLM responses
+// Uses OpenAI GPT-4o-mini API
 
 class GroceryAI {
   constructor() {
@@ -7,10 +7,9 @@ class GroceryAI {
     this.apiKey = (window.APP_CONFIG && window.APP_CONFIG.OPENAI_API_KEY) 
                   || localStorage.getItem('openaiApiKey') 
                   || '';
-    this.apiEndpoint = 'https://api.openai.com/v1/responses'; // New Responses API
-    this.model = (window.APP_CONFIG && window.APP_CONFIG.AI_MODEL) || 'gpt-5-mini';
+    this.apiEndpoint = 'https://api.openai.com/v1/chat/completions';
+    this.model = 'gpt-4o-mini'; // Using real GPT-4o-mini model
     this.conversationHistory = [];
-    this.previousResponseId = null;
   }
 
   setApiKey(key) {
@@ -93,9 +92,6 @@ You can help with:
 
 Be helpful, concise, and practical. Use Thai ingredient names when appropriate. When suggesting recipes, format them nicely with ingredients and steps.`;
 
-    // Build input combining system context and user message
-    const input = `${systemPrompt}\n\nUser: ${userMessage}`;
-
     // Add user message to history
     this.conversationHistory.push({
       role: 'user',
@@ -108,30 +104,21 @@ Be helpful, concise, and practical. Use Thai ingredient names when appropriate. 
     }
 
     try {
-      const requestBody = {
-        model: this.model,
-        input: input,
-        reasoning: { 
-          effort: (window.APP_CONFIG && window.APP_CONFIG.AI_REASONING_EFFORT) || "low" 
-        },
-        text: { 
-          verbosity: (window.APP_CONFIG && window.APP_CONFIG.AI_VERBOSITY) || "medium" 
-        },
-        max_output_tokens: (window.APP_CONFIG && window.APP_CONFIG.AI_MAX_TOKENS) || 1024
-      };
-
-      // Pass previous response ID for better context
-      if (this.previousResponseId) {
-        requestBody.previous_response_id = this.previousResponseId;
-      }
-
       const response = await fetch(this.apiEndpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify({
+          model: this.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...this.conversationHistory
+          ],
+          temperature: 0.7,
+          max_tokens: 1024
+        })
       });
 
       if (!response.ok) {
@@ -140,10 +127,7 @@ Be helpful, concise, and practical. Use Thai ingredient names when appropriate. 
       }
 
       const data = await response.json();
-      const assistantMessage = data.output_text;
-      
-      // Store response ID for next turn
-      this.previousResponseId = data.id;
+      const assistantMessage = data.choices[0].message.content;
 
       // Add assistant response to history
       this.conversationHistory.push({
@@ -161,7 +145,6 @@ Be helpful, concise, and practical. Use Thai ingredient names when appropriate. 
 
   clearHistory() {
     this.conversationHistory = [];
-    this.previousResponseId = null;
   }
 }
 
