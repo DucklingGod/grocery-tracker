@@ -64,6 +64,13 @@ class FirebaseHouseholdSync {
             lastSeen: Date.now()
           });
           
+          // Download existing household data BEFORE starting listeners
+          const householdData = snapshot.val();
+          if (householdData.data) {
+            console.log('📥 Downloading existing household data...');
+            await this.mergeData(householdData.data);
+          }
+          
           // Start listening for changes
           this.startListening();
           this.startPresenceUpdates();
