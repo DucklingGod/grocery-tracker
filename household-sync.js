@@ -68,9 +68,11 @@ class HouseholdSync {
       this.householdCode = code;
       this.isHost = true;
       
+      console.log('Creating household with code:', code);
+      
       // Create peer with household code as ID
       this.peer = new Peer('household-' + code, {
-        debug: 0,
+        debug: 2, // Enable debug logging
         config: {
           iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
@@ -80,7 +82,8 @@ class HouseholdSync {
       });
       
       this.peer.on('open', (id) => {
-        console.log('Household created:', code);
+        console.log('✅ Household peer created:', id);
+        console.log('Household code:', code);
         localStorage.setItem('householdCode', code);
         localStorage.setItem('isHost', 'true');
         this.updateUI();
@@ -88,14 +91,17 @@ class HouseholdSync {
       });
       
       this.peer.on('connection', (conn) => {
+        console.log('👤 New member connecting:', conn.peer);
         this.handleConnection(conn);
       });
       
       this.peer.on('error', (err) => {
-        console.error('Peer error:', err);
+        console.error('❌ Peer error:', err);
         if (err.type === 'unavailable-id') {
           showToast('❌ Household code already in use', 'error');
           this.disconnect();
+        } else {
+          showToast('❌ Error: ' + err.type, 'error');
         }
       });
       
@@ -110,9 +116,11 @@ class HouseholdSync {
       this.householdCode = code;
       this.isHost = false;
       
+      console.log('Joining household:', code);
+      
       // Create peer with unique device ID
       this.peer = new Peer(this.deviceId, {
-        debug: 0,
+        debug: 2, // Enable debug logging
         config: {
           iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
@@ -122,7 +130,8 @@ class HouseholdSync {
       });
       
       this.peer.on('open', (id) => {
-        console.log('Connecting to household:', code);
+        console.log('My peer ID:', id);
+        console.log('Connecting to household:', 'household-' + code);
         
         // Connect to host
         const conn = this.peer.connect('household-' + code, {
@@ -130,8 +139,10 @@ class HouseholdSync {
           serialization: 'json'
         });
         
+        console.log('Connection attempt started...');
+        
         conn.on('open', () => {
-          console.log('Connected to household!');
+          console.log('✅ Connected to household!');
           localStorage.setItem('householdCode', code);
           localStorage.setItem('isHost', 'false');
           this.handleConnection(conn);
@@ -139,18 +150,29 @@ class HouseholdSync {
           showToast(`✓ Joined household: ${code}`, 'success');
           
           // Request initial sync
-          this.requestSync();
+          setTimeout(() => {
+            console.log('Requesting initial sync...');
+            this.requestSync();
+          }, 1000);
         });
         
         conn.on('error', (err) => {
-          console.error('Connection error:', err);
+          console.error('❌ Connection error:', err);
           showToast('❌ Failed to connect to household', 'error');
+        });
+        
+        conn.on('close', () => {
+          console.log('Connection closed');
         });
       });
       
       this.peer.on('error', (err) => {
-        console.error('Peer error:', err);
-        showToast('❌ Connection failed. Check the code and try again.', 'error');
+        console.error('❌ Peer error:', err);
+        if (err.type === 'peer-unavailable') {
+          showToast('❌ Household not found. Check the code and try again.', 'error');
+        } else {
+          showToast('❌ Connection failed: ' + err.type, 'error');
+        }
       });
       
     } catch (err) {
@@ -197,15 +219,17 @@ class HouseholdSync {
   }
   
   async handleMessage(data, conn) {
-    console.log('Received message:', data.type);
+    console.log('📨 Received message:', data.type, 'from', data.deviceId || conn.peer);
     
     switch (data.type) {
       case 'hello':
         // Store device info
+        console.log('👋 Hello from:', data.deviceName, '(' + data.deviceId + ')');
         this.deviceNames.set(conn.peer, data.deviceName || 'Unknown Device');
         this.updateUI();
         
         // Send hello back
+        console.log('👋 Sending hello back');
         conn.send({
           type: 'hello',
           deviceId: this.deviceId,
@@ -215,6 +239,7 @@ class HouseholdSync {
         
         // If we're host, send full data
         if (this.isHost) {
+          console.log('📤 Sending full data to new member');
           const fullData = await this.getLocalData();
           conn.send({
             type: 'sync-data',
@@ -226,6 +251,7 @@ class HouseholdSync {
       
       case 'sync-request':
         // Send full data to requester
+        console.log('📤 Sending full data in response to sync-request');
         const fullData = await this.getLocalData();
         conn.send({
           type: 'sync-data',
@@ -236,19 +262,24 @@ class HouseholdSync {
         
       case 'sync-data':
         // Merge received data with local
+        console.log('📥 Received sync-data, merging...');
         await this.mergeData(data.data);
         showToast('✓ Synced with household', 'success');
         break;
         
       case 'update':
         // Apply single update (skip if from ourselves)
+        console.log('📥 Received update:', data.update.action, 'from', data.deviceId);
         if (data.deviceId !== this.deviceId) {
           await this.applyUpdate(data.update);
           showToast('📥 Update received from household', 'info');
+        } else {
+          console.log('🔁 Skipping own update');
         }
         break;
         
       case 'ping':
+        console.log('🏓 Ping from', data.deviceId);
         conn.send({ 
           type: 'pong', 
           deviceId: this.deviceId,
@@ -345,11 +376,29 @@ class HouseholdSync {
       deviceId: this.deviceId
     };
     
-    this.connections.forEach((conn) => {
+    console.log('📤 Broadcasting update:', update.action, 'to', this.connections.size, 'devices');
+    
+    let sentCount = 0;
+    this.connections.forEach((conn, peerId) => {
       if (conn.open) {
-        conn.send(message);
+        try {
+          conn.send(message);
+          sentCount++;
+          console.log('✅ Sent to:', peerId);
+        } catch (err) {
+          console.error('❌ Failed to send to:', peerId, err);
+        }
+      } else {
+        console.warn('⚠️ Connection not open:', peerId);
       }
     });
+    
+    console.log(`📤 Broadcast complete: ${sentCount}/${this.connections.size} devices`);
+    
+    // If host and no connections, warn user
+    if (this.isHost && sentCount === 0 && this.connections.size > 0) {
+      console.warn('⚠️ No active connections to broadcast to');
+    }
   }
   
   requestSync() {
@@ -491,7 +540,11 @@ async function initHouseholdSync() {
 
 // Hook into data changes to broadcast updates
 function notifyHouseholdUpdate(action, data) {
+  console.log('🔔 notifyHouseholdUpdate called:', action, data);
   if (householdSync && householdSync.isConnected()) {
+    console.log('✅ Household connected, broadcasting update');
     householdSync.broadcastUpdate({ action, data });
+  } else {
+    console.log('⚠️ Household not connected, skipping broadcast');
   }
 }
