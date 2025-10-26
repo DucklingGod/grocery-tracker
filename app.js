@@ -58,6 +58,36 @@ document.addEventListener('keydown', (e)=>{
   }
 });
 
+// --- Hamburger Menu Toggle ---
+const hamburger = document.getElementById('hamburger');
+const navMenu = document.getElementById('navMenu');
+
+if (hamburger && navMenu) {
+  hamburger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    hamburger.classList.toggle('active');
+    navMenu.classList.toggle('open');
+  });
+  
+  // Close menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (navMenu.classList.contains('open') && 
+        !navMenu.contains(e.target) && 
+        !hamburger.contains(e.target)) {
+      hamburger.classList.remove('active');
+      navMenu.classList.remove('open');
+    }
+  });
+  
+  // Close menu when clicking a nav button
+  $$('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      hamburger.classList.remove('active');
+      navMenu.classList.remove('open');
+    });
+  });
+}
+
 // --- SPA nav ---
 $$('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
   $$('.nav-btn').forEach(b=>b.classList.remove('active'));

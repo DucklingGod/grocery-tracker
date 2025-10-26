@@ -16,7 +16,12 @@
 <body>
 <header class="topbar">
   <div class="brand" data-i18n="appTitle">🛒 Grocery Tracker</div>
-  <nav class="nav">
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <nav class="nav" id="navMenu">
     <button data-view="dashboard" class="nav-btn active" data-i18n="navDashboard">📊 Dashboard</button>
     <button data-view="quickadd" class="nav-btn" data-i18n="navQuickAdd">➕ Quick Add</button>
     <button data-view="weeklog" class="nav-btn" data-i18n="navWeekLog">📋 Week Log</button>
