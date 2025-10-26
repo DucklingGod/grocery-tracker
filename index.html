@@ -337,8 +337,27 @@
 
 <footer class="foot">© 2025 Grocery Tracker • Offline-first PWA</footer>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script>
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDummy-REPLACE-THIS-KEY",
+    authDomain: "grocery-tracker.firebaseapp.com",
+    databaseURL: "https://grocery-tracker-default-rtdb.firebaseio.com",
+    projectId: "grocery-tracker",
+    storageBucket: "grocery-tracker.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abc123"
+  };
+  
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+</script>
+
 <script src="charts.js"></script>
-<script src="household-sync.js"></script>
+<script src="firebase-sync.js"></script>
 <script src="app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
