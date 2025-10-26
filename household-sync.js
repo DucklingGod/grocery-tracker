@@ -64,11 +64,18 @@ class HouseholdSync {
   
   async createHousehold(customCode = null) {
     try {
+      // Check if PeerJS is loaded
+      if (typeof Peer === 'undefined') {
+        console.error('❌ PeerJS not loaded yet! Waiting...');
+        await this.loadPeerJS();
+        console.log('✅ PeerJS loaded');
+      }
+      
       const code = customCode || this.generateHouseholdCode();
       this.householdCode = code;
       this.isHost = true;
       
-      console.log('Creating household with code:', code);
+      console.log('🏠 Creating household with code:', code);
       
       // Create peer with household code as ID
       this.peer = new Peer('household-' + code, {
@@ -82,8 +89,8 @@ class HouseholdSync {
       });
       
       this.peer.on('open', (id) => {
-        console.log('✅ Household peer created:', id);
-        console.log('Household code:', code);
+        console.log('✅ Peer opened! ID:', id);
+        console.log('📱 Household code:', code);
         localStorage.setItem('householdCode', code);
         localStorage.setItem('isHost', 'true');
         this.updateUI();
@@ -96,7 +103,7 @@ class HouseholdSync {
       });
       
       this.peer.on('error', (err) => {
-        console.error('❌ Peer error:', err);
+        console.error('❌ Peer error:', err.type, err);
         if (err.type === 'unavailable-id') {
           showToast('❌ Household code already in use', 'error');
           this.disconnect();
@@ -105,8 +112,17 @@ class HouseholdSync {
         }
       });
       
+      // Timeout if connection doesn't open in 10 seconds
+      setTimeout(() => {
+        if (this.peer && !this.peer.open) {
+          console.error('⏱️ Timeout: Peer did not open within 10 seconds');
+          console.error('⚠️ Check if PeerJS server is accessible');
+          showToast('❌ Connection timeout. Check your internet connection.', 'error');
+        }
+      }, 10000);
+      
     } catch (err) {
-      console.error('Failed to create household:', err);
+      console.error('❌ Failed to create household:', err);
       showToast('❌ Failed to create household', 'error');
     }
   }
@@ -521,6 +537,20 @@ async function initHouseholdSync() {
   
   // Setup UI handlers
   document.getElementById('btnCreateHousehold').addEventListener('click', async () => {
+    // Prevent multiple clicks
+    if (householdSync.peer && householdSync.peer.open) {
+      console.warn('⚠️ Already connected to household');
+      showToast('⚠️ Already connected to a household', 'warning');
+      return;
+    }
+    
+    if (householdSync.peer && !householdSync.peer.destroyed) {
+      console.warn('⚠️ Peer connection in progress...');
+      showToast('⚠️ Connection in progress, please wait...', 'warning');
+      return;
+    }
+    
+    console.log('🎯 Create Household button clicked');
     await householdSync.createHousehold();
   });
   
