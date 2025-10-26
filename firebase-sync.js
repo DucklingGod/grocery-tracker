@@ -223,10 +223,24 @@ class FirebaseHouseholdSync {
     
     // Listen to weeklog changes
     this.householdRef.child('data/weeklog').on('child_added', async (snapshot) => {
-      console.log('📥 Weeklog item added:', snapshot.key);
+      const itemId = snapshot.key;
       const item = snapshot.val();
-      await tx('weeklog', 'readwrite', store => {
-        store.put(item);
+      console.log('📥 Weeklog item added:', itemId);
+      
+      // Add/update in local IndexedDB
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction('weeklog', 'readwrite');
+        const store = transaction.objectStore('weeklog');
+        const request = store.put(item);
+        
+        request.onsuccess = () => {
+          console.log('✅ Weeklog item saved to local DB:', itemId);
+          resolve();
+        };
+        request.onerror = (e) => {
+          console.error('❌ Failed to save weeklog:', e.target.error);
+          reject(e.target.error);
+        };
       });
       
       // Only render after initial load is complete
@@ -235,33 +249,66 @@ class FirebaseHouseholdSync {
         await renderDashboard();
         await renderWeekLog();
         await renderPantry();
+        await renderWaste();
       }
     });
     
     this.householdRef.child('data/weeklog').on('child_changed', async (snapshot) => {
-      console.log('📥 Weeklog item changed:', snapshot.key);
+      const itemId = snapshot.key;
       const item = snapshot.val();
-      await tx('weeklog', 'readwrite', store => {
-        store.put(item);
+      console.log('📥 Weeklog item changed:', itemId);
+      
+      // Update in local IndexedDB
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction('weeklog', 'readwrite');
+        const store = transaction.objectStore('weeklog');
+        const request = store.put(item);
+        
+        request.onsuccess = () => {
+          console.log('✅ Weeklog item updated in local DB:', itemId);
+          resolve();
+        };
+        request.onerror = (e) => {
+          console.error('❌ Failed to update weeklog:', e.target.error);
+          reject(e.target.error);
+        };
       });
       
       if (!this.isUpdating) {
         console.log('🔄 Rendering all views after weeklog change');
         await renderDashboard();
         await renderWeekLog();
+        await renderPantry();
+        await renderWaste();
       }
     });
     
     this.householdRef.child('data/weeklog').on('child_removed', async (snapshot) => {
-      console.log('📥 Weeklog item removed:', snapshot.key);
-      await tx('weeklog', 'readwrite', store => {
-        store.delete(Number(snapshot.key));
+      const itemId = Number(snapshot.key);
+      console.log('📥 Weeklog item removed:', itemId);
+      
+      // Delete from local IndexedDB
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction('weeklog', 'readwrite');
+        const store = transaction.objectStore('weeklog');
+        const request = store.delete(itemId);
+        
+        request.onsuccess = () => {
+          console.log('✅ Weeklog item deleted from local DB:', itemId);
+          resolve();
+        };
+        request.onerror = (e) => {
+          console.error('❌ Failed to delete weeklog:', e.target.error);
+          reject(e.target.error);
+        };
       });
       
       if (!this.isUpdating) {
         console.log('🔄 Rendering all views after weeklog removal');
         await renderDashboard();
         await renderWeekLog();
+        await renderPantry();
+        await renderWaste();
       }
     });
     
