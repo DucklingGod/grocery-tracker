@@ -144,7 +144,16 @@ function openDB(){
 }
 function tx(store, mode='readonly'){ return db.transaction(store, mode).objectStore(store); }
 async function addWeekLog(row){ return new Promise((res,rej)=>{ const r=tx('weeklog','readwrite').add(row); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
-async function getAll(store){ return new Promise((res,rej)=>{ const r=tx(store).getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });}
+async function getAll(store){ 
+  return new Promise((res,rej)=>{ 
+    const r=tx(store).getAll(); 
+    r.onsuccess=()=>{
+      console.log(`📊 getAll('${store}') returned ${r.result.length} items`);
+      res(r.result);
+    }; 
+    r.onerror=()=>rej(r.error); 
+  });
+}
 async function putPantry(entry){ return new Promise((res,rej)=>{ const r=tx('pantry','readwrite').put(entry); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
 async function getPantry(item){ return new Promise((res,rej)=>{ const r=tx('pantry').get(item); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);});}
 async function clearAll(){ return new Promise((res,rej)=>{ const stores=['weeklog','pantry']; let left=stores.length; stores.forEach(s=>{ const r=tx(s,'readwrite').clear(); r.onsuccess=()=>{ if(--left===0) res();}; r.onerror=()=>rej(r.error);});});}

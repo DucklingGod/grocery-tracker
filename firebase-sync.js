@@ -362,31 +362,37 @@ class FirebaseHouseholdSync {
       if (remoteData.weeklog) {
         const weeklogEntries = Object.values(remoteData.weeklog);
         console.log(`📥 Merging ${weeklogEntries.length} weeklog entries...`);
+        
         for (const entry of weeklogEntries) {
-          // Check if this entry already exists locally
-          const existing = await tx('weeklog', 'readonly', store => {
-            return new Promise((resolve) => {
-              const request = store.get(entry.id);
-              request.onsuccess = () => resolve(request.result);
-              request.onerror = () => resolve(null);
-            });
-          });
-          
-          if (!existing) {
-            // Entry doesn't exist locally, add it
-            console.log(`➕ Adding new weeklog entry:`, entry.id);
+          try {
+            // Always use put() which will add OR update
             await tx('weeklog', 'readwrite', store => {
-              store.add(entry);
+              return new Promise((resolve, reject) => {
+                const request = store.put(entry);
+                request.onsuccess = () => {
+                  console.log(`✅ Weeklog entry ${entry.id} saved successfully`);
+                  resolve(request.result);
+                };
+                request.onerror = (e) => {
+                  console.error(`❌ Failed to save weeklog ${entry.id}:`, e.target.error);
+                  reject(e.target.error);
+                };
+              });
             });
-          } else {
-            // Entry exists, update it
-            console.log(`🔄 Updating existing weeklog entry:`, entry.id);
-            await tx('weeklog', 'readwrite', store => {
-              store.put(entry);
-            });
+          } catch (err) {
+            console.error(`❌ Error processing weeklog entry ${entry.id}:`, err);
           }
         }
-        console.log('✅ Weeklog merged');
+        
+        // Verify the data was actually saved
+        const savedCount = await tx('weeklog', 'readonly', store => {
+          return new Promise((resolve) => {
+            const request = store.count();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => resolve(0);
+          });
+        });
+        console.log(`✅ Weeklog merged - ${savedCount} entries in IndexedDB`);
       }
       
       // Merge pantry
