@@ -262,19 +262,28 @@ function saveGroqApiKey() {
 
 // Initialize on app load
 if (typeof window !== 'undefined') {
-  window.addEventListener('load', () => {
-    initAI();
-    
-    // Check if API key is available from config or localStorage
-    const hasKey = (window.APP_CONFIG && window.APP_CONFIG.OPENAI_API_KEY) 
-                   || localStorage.getItem('openaiApiKey');
-    
-    if (hasKey) {
-      document.getElementById('aiSetup').style.display = 'none';
-      document.getElementById('aiChatInterface').style.display = 'block';
-    } else {
-      document.getElementById('aiSetup').style.display = 'block';
-      document.getElementById('aiChatInterface').style.display = 'none';
-    }
+  window.addEventListener('DOMContentLoaded', () => {
+    // Small delay to ensure config.js is fully loaded
+    setTimeout(() => {
+      initAI();
+      
+      // Check if API key is available from config or localStorage
+      const hasKey = (window.APP_CONFIG && window.APP_CONFIG.OPENAI_API_KEY) 
+                     || localStorage.getItem('openaiApiKey');
+      
+      console.log('🔑 API Key check:', {
+        hasConfig: !!(window.APP_CONFIG && window.APP_CONFIG.OPENAI_API_KEY),
+        hasLocalStorage: !!localStorage.getItem('openaiApiKey'),
+        hasKey: hasKey
+      });
+      
+      if (hasKey) {
+        document.getElementById('aiSetup').style.display = 'none';
+        document.getElementById('aiChatInterface').style.display = 'block';
+      } else {
+        document.getElementById('aiSetup').style.display = 'block';
+        document.getElementById('aiChatInterface').style.display = 'none';
+      }
+    }, 100);
   });
 }
