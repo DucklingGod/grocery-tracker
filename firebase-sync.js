@@ -333,28 +333,36 @@ class FirebaseHouseholdSync {
   }
   
   async mergeData(remoteData) {
-    console.log('🔄 Merging remote data with local...');
+    console.log('🔄 Merging remote data with local...', {
+      weeklogCount: remoteData.weeklog ? Object.keys(remoteData.weeklog).length : 0,
+      pantryCount: remoteData.pantry ? Object.keys(remoteData.pantry).length : 0
+    });
     
     try {
       // Merge weeklog
       if (remoteData.weeklog) {
         const weeklogEntries = Object.values(remoteData.weeklog);
+        console.log(`📥 Merging ${weeklogEntries.length} weeklog entries...`);
         for (const entry of weeklogEntries) {
           await tx('weeklog', 'readwrite', store => {
             store.put(entry);
           });
         }
+        console.log('✅ Weeklog merged');
       }
       
       // Merge pantry
       if (remoteData.pantry) {
         const pantryEntries = Object.values(remoteData.pantry);
+        console.log(`📥 Merging ${pantryEntries.length} pantry entries...`);
         for (const entry of pantryEntries) {
           await putPantry(entry);
         }
+        console.log('✅ Pantry merged');
       }
       
-      console.log('✅ Data merged successfully');
+      console.log('✅ Data merged successfully, rendering dashboard...');
+      renderDashboard();
     } catch (err) {
       console.error('❌ Failed to merge data:', err);
     }
@@ -370,8 +378,27 @@ class FirebaseHouseholdSync {
       console.log('🔄 Manual sync started...');
       showToast('⏳ Syncing...', 'info');
       
-      // Upload local data
+      // First, download remote data
+      console.log('📥 Downloading remote data...');
+      const snapshot = await this.householdRef.child('data').once('value');
+      const remoteData = snapshot.val();
+      
+      if (remoteData) {
+        await this.mergeData(remoteData);
+      }
+      
+      // Then, upload local data (merge with remote)
+      console.log('📤 Uploading local data...');
       const localData = await this.getLocalData();
+      
+      // Merge local with remote instead of replacing
+      if (remoteData && remoteData.weeklog) {
+        localData.weeklog = { ...remoteData.weeklog, ...localData.weeklog };
+      }
+      if (remoteData && remoteData.pantry) {
+        localData.pantry = { ...remoteData.pantry, ...localData.pantry };
+      }
+      
       await this.householdRef.child('data').set(localData);
       
       showToast('✓ Sync complete!', 'success');
