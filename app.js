@@ -609,11 +609,18 @@ async function renderDashboard(){
     
     // Weekly shopping cost by purchase date (Buy actions)
     if(r.purchaseDate && r.actionType === 'Buy'){
-      const d = new Date(r.purchaseDate);
-      // Get week number (simple: use Monday as week start)
-      const weekStart = new Date(d);
-      weekStart.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1)); // Get Monday
+      // Parse date in local timezone to avoid UTC issues
+      const [year, month, day] = r.purchaseDate.split('-').map(Number);
+      const d = new Date(year, month - 1, day);
+      
+      // Get Monday of this week
+      const dayOfWeek = d.getDay();
+      const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const weekStart = new Date(year, month - 1, day + daysToMonday);
+      
       const wkey = weekStart.toISOString().slice(0,10);
+      console.log(`Processing Buy: purchaseDate=${r.purchaseDate}, dayOfWeek=${dayOfWeek}, weekStart=${wkey}`);
+      
       if(!shopWeekly[wkey]) shopWeekly[wkey]=0;
       const cost = (r.totalPrice || ((r.boughtQty||0) * (r.pricePerUnit||0)));
       shopWeekly[wkey] += cost;
@@ -657,9 +664,15 @@ async function renderDashboard(){
   const barShop = document.getElementById('barWeeklyShopping');
   const shopLabels=[], shopVals=[];
   for(let i=3;i>=0;i--){
-    const d = new Date(Date.now() - i*7*86400000);
-    const weekStart = new Date(d);
-    weekStart.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1));
+    // Use local timezone dates
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i*7);
+    
+    // Get Monday of this week
+    const dayOfWeek = d.getDay();
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const weekStart = new Date(d.getFullYear(), d.getMonth(), d.getDate() + daysToMonday);
+    
     const wkey = weekStart.toISOString().slice(0,10);
     shopLabels.push('Week '+wkey.slice(5,10));
     shopVals.push(shopWeekly[wkey]||0);
