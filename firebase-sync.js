@@ -256,7 +256,7 @@ class FirebaseHouseholdSync {
     this.householdRef.child('data/weeklog').on('child_changed', async (snapshot) => {
       const itemId = snapshot.key;
       const item = snapshot.val();
-      console.log('📥 Weeklog item changed:', itemId);
+      console.log('📥 Weeklog item changed:', itemId, '| isUpdating:', this.isUpdating);
       
       // Update in local IndexedDB
       await new Promise((resolve, reject) => {
@@ -274,18 +274,18 @@ class FirebaseHouseholdSync {
         };
       });
       
-      if (!this.isUpdating) {
-        console.log('🔄 Rendering all views after weeklog change');
-        await renderDashboard();
-        await renderWeekLog();
-        await renderPantry();
-        await renderWaste();
-      }
+      // Always render, regardless of isUpdating flag
+      console.log('🔄 Rendering all views after weeklog change');
+      await renderDashboard();
+      await renderWeekLog();
+      await renderPantry();
+      await renderWaste();
+      console.log('✅ All views rendered after update');
     });
     
     this.householdRef.child('data/weeklog').on('child_removed', async (snapshot) => {
       const itemId = Number(snapshot.key);
-      console.log('📥 Weeklog item removed:', itemId);
+      console.log('📥 Weeklog item removed:', itemId, '| isUpdating:', this.isUpdating);
       
       // Delete from local IndexedDB
       await new Promise((resolve, reject) => {
@@ -303,13 +303,13 @@ class FirebaseHouseholdSync {
         };
       });
       
-      if (!this.isUpdating) {
-        console.log('🔄 Rendering all views after weeklog removal');
-        await renderDashboard();
-        await renderWeekLog();
-        await renderPantry();
-        await renderWaste();
-      }
+      // Always render, regardless of isUpdating flag
+      console.log('🔄 Rendering all views after weeklog removal');
+      await renderDashboard();
+      await renderWeekLog();
+      await renderPantry();
+      await renderWaste();
+      console.log('✅ All views rendered after deletion');
     });
     
     // Mark weeklog as initialized after first data load
