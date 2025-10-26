@@ -171,6 +171,27 @@ $('#qaItem').addEventListener('change', async (e)=>{
   const itemName = e.target.value.trim();
   if(!itemName) return;
   
+  // Check if user manually changed the item name after scanning
+  const lastScannedBarcode = sessionStorage.getItem('lastScannedBarcode');
+  if (lastScannedBarcode) {
+    // Check if the original name was generic (contained barcode)
+    const wasGeneric = itemName.includes('สินค้า') || /^\d{8,}$/.test(itemName);
+    
+    // If user changed it to a real name, learn this mapping immediately
+    if (!wasGeneric && !itemName.includes(lastScannedBarcode)) {
+      const category = $('#qaCategory').value || null;
+      const unit = $('#qaUnit').value || null;
+      
+      const savedProducts = JSON.parse(localStorage.getItem('scannedProducts') || '{}');
+      savedProducts[lastScannedBarcode] = { name: itemName, category, unit };
+      localStorage.setItem('scannedProducts', JSON.stringify(savedProducts));
+      console.log('💡 Learned from item name change:', lastScannedBarcode, '→', itemName);
+      
+      // Clear the session storage
+      sessionStorage.removeItem('lastScannedBarcode');
+    }
+  }
+  
   const pantryItem = await getPantry(itemName);
   if(pantryItem){
     // Auto-fill unit if empty
@@ -297,6 +318,10 @@ $('#quickForm').addEventListener('submit', async (e)=>{
   $('#qaAction').value = '';
   $('#qaPrice').value = '';
   ['buyFields','buyFields2','buyFields3','useFields','wasteFields'].forEach(id=>$('#'+id).classList.add('hidden'));
+  
+  // Learn from barcode if item name contains barcode pattern
+  learnBarcodeFromFormSubmission(row.item, row.category, row.unit);
+  
   renderDashboard(); renderWeekLog(); renderPantry(); renderWaste();
   showToast('✓ Entry saved successfully!', 'success');
 });
@@ -965,3 +990,48 @@ window.addEventListener('load', () => {
   }
   updateUI();
 });
+
+// Learn barcode from form submission
+// This function saves barcode-to-product mapping when user manually edits and saves
+function learnBarcodeFromFormSubmission(itemName, category, unit) {
+  if (!itemName) return;
+  
+  // Check if item name contains a barcode pattern (8+ digits)
+  const barcodeMatch = itemName.match(/\b(\d{8,})\b/);
+  if (!barcodeMatch) return;
+  
+  const barcode = barcodeMatch[1];
+  console.log('Learning barcode from form submission:', barcode);
+  
+  // Get the last scanned barcode (stored temporarily)
+  const lastScannedBarcode = sessionStorage.getItem('lastScannedBarcode');
+  
+  // If we have a recently scanned barcode, learn from this submission
+  if (lastScannedBarcode && lastScannedBarcode === barcode) {
+    // User kept the barcode in the name, probably wants to replace it
+    console.log('User kept barcode in name, not learning');
+    sessionStorage.removeItem('lastScannedBarcode');
+    return;
+  }
+  
+  // If barcode is in the name and we have valid product info, learn it
+  if (barcode.length >= 8) {
+    // Check if this is a real product name or just "สินค้า [barcode]"
+    const isGenericName = itemName.includes('สินค้า') && itemName.includes(barcode);
+    
+    if (!isGenericName) {
+      // Save this barcode mapping for future scans
+      const savedProducts = JSON.parse(localStorage.getItem('scannedProducts') || '{}');
+      savedProducts[barcode] = { 
+        name: itemName, 
+        category: category || null, 
+        unit: unit || null 
+      };
+      localStorage.setItem('scannedProducts', JSON.stringify(savedProducts));
+      console.log('Learned barcode mapping:', barcode, '→', itemName);
+    }
+  }
+  
+  // Clear the last scanned barcode
+  sessionStorage.removeItem('lastScannedBarcode');
+}

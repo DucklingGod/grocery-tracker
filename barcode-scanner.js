@@ -259,6 +259,9 @@ async function handleBarcodeDetected(barcode) {
   
   console.log('Valid barcode detected:', barcode);
   
+  // Store this barcode in sessionStorage for learning purposes
+  sessionStorage.setItem('lastScannedBarcode', barcode);
+  
   const resultDiv = document.getElementById('barcodeResult');
   resultDiv.textContent = `✓ Barcode: ${barcode}`;
   resultDiv.classList.add('show');
