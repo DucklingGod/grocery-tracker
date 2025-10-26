@@ -665,6 +665,7 @@ async function renderDashboard(){
     shopLabels.push('Week '+label);
     shopVals.push(shopWeekly[wkey]||0);
   }
+  console.log('📊 Weekly shopping chart data:', { shopLabels, shopVals, shopWeekly });
   drawBar(barShop, shopLabels, shopVals);
   
   // KPIs with trends
