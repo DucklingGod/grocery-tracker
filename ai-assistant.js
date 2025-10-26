@@ -3,15 +3,16 @@
 
 class GroceryAI {
   constructor() {
-    this.apiKey = localStorage.getItem('groqApiKey') || '';
-    this.apiEndpoint = 'https://api.groq.com/openai/v1/chat/completions';
-    this.model = 'llama-3.1-70b-versatile'; // Fast and capable
+    // API key will be set from external config
+    this.apiKey = localStorage.getItem('openaiApiKey') || '';
+    this.apiEndpoint = 'https://api.openai.com/v1/chat/completions';
+    this.model = 'gpt-4o-mini'; // Fast, affordable, and capable
     this.conversationHistory = [];
   }
 
   setApiKey(key) {
     this.apiKey = key;
-    localStorage.setItem('groqApiKey', key);
+    localStorage.setItem('openaiApiKey', key);
   }
 
   async getContextData() {
@@ -59,7 +60,7 @@ class GroceryAI {
 
   async chat(userMessage) {
     if (!this.apiKey) {
-      throw new Error('Please set your Groq API key in Settings first');
+      throw new Error('API key is not set');
     }
 
     // Get current grocery data
@@ -234,7 +235,7 @@ function saveGroqApiKey() {
   }
   
   groceryAI.setApiKey(key);
-  showToast('✓ API key saved', 'success');
+  showToast('✓ OpenAI API key saved', 'success');
   
   // Hide setup, show chat
   document.getElementById('aiSetup').style.display = 'none';
@@ -246,11 +247,14 @@ if (typeof window !== 'undefined') {
   window.addEventListener('load', () => {
     initAI();
     
-    // Show/hide based on API key
-    const hasKey = localStorage.getItem('groqApiKey');
+    // Check if API key is set, otherwise show setup
+    const hasKey = localStorage.getItem('openaiApiKey');
     if (hasKey) {
       document.getElementById('aiSetup').style.display = 'none';
       document.getElementById('aiChatInterface').style.display = 'block';
+    } else {
+      document.getElementById('aiSetup').style.display = 'block';
+      document.getElementById('aiChatInterface').style.display = 'none';
     }
   });
 }
