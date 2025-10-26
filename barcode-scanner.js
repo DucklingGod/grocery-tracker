@@ -1,12 +1,14 @@
-// Barcode Scanner using HTML5-QRCode library
+// Barcode Scanner
 let barcodeScanner = null;
 let scanning = false;
+let stream = null;
 
 // Product database mapping (you can expand this)
 const productDatabase = {
   // Thai products - common grocery items
   '8850123456789': { name: 'นมสด', category: 'Dairy & Eggs' },
   '8851234567890': { name: 'ข้าวหอมมะลิ', category: 'Grains & Bread' },
+  '8859114905525': { name: 'ธัญพืช (Diamond Grains Brand)', category: 'Grains & Bread' },
   // Add more as needed
 };
 
@@ -21,28 +23,41 @@ function openBarcodeScanner() {
   modal.style.display = 'flex';
   resultDiv.classList.remove('show');
   resultDiv.textContent = '';
+  scanning = true;
+  
+  console.log('Opening barcode scanner...');
   
   // Request camera access
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     navigator.mediaDevices.getUserMedia({ 
       video: { 
         facingMode: 'environment', // Use back camera on mobile
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
       } 
     })
-    .then(stream => {
+    .then(videoStream => {
+      stream = videoStream;
       video.srcObject = stream;
+      video.setAttribute('playsinline', true);
       video.play();
-      scanning = true;
-      startBarcodeDetection(video);
+      
+      console.log('Camera started successfully');
+      showToast('✓ Camera ready. Point at barcode...', 'info');
+      
+      // Wait for video to be ready
+      video.addEventListener('loadedmetadata', () => {
+        console.log('Video metadata loaded, starting detection...');
+        startBarcodeDetection(video);
+      });
     })
     .catch(err => {
-      console.error('Camera access denied:', err);
+      console.error('Camera access error:', err);
       showToast('❌ Camera access denied. Please allow camera permissions.', 'error');
       closeBarcodeScanner();
     });
   } else {
+    console.error('getUserMedia not supported');
     showToast('❌ Camera not supported on this device', 'error');
     closeBarcodeScanner();
   }
@@ -55,9 +70,18 @@ function closeBarcodeScanner() {
   
   scanning = false;
   
+  console.log('Closing barcode scanner...');
+  
   // Stop video stream
-  if (video && video.srcObject) {
-    video.srcObject.getTracks().forEach(track => track.stop());
+  if (stream) {
+    stream.getTracks().forEach(track => {
+      track.stop();
+      console.log('Stopped camera track');
+    });
+    stream = null;
+  }
+  
+  if (video) {
     video.srcObject = null;
   }
   
@@ -66,72 +90,143 @@ function closeBarcodeScanner() {
   }
 }
 
-// Barcode detection using BarcodeDetector API or fallback
+// Barcode detection using multiple methods
 async function startBarcodeDetection(video) {
-  // Check if BarcodeDetector is supported
+  console.log('Starting barcode detection...');
+  
+  // Method 1: Try native BarcodeDetector first (Chrome, Edge)
   if ('BarcodeDetector' in window) {
+    console.log('Using native BarcodeDetector API');
     try {
-      const barcodeDetector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39'] });
+      const barcodeDetector = new BarcodeDetector({ 
+        formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'itf', 'codabar'] 
+      });
       
+      let detectCount = 0;
       const detectBarcode = async () => {
-        if (!scanning) return;
+        if (!scanning) {
+          console.log('Scanning stopped');
+          return;
+        }
+        
+        detectCount++;
+        if (detectCount % 10 === 0) {
+          console.log(`Detection attempt ${detectCount}...`);
+        }
         
         try {
           const barcodes = await barcodeDetector.detect(video);
           
           if (barcodes.length > 0) {
             const barcode = barcodes[0].rawValue;
+            console.log('Barcode detected:', barcode);
             handleBarcodeDetected(barcode);
             return;
           }
         } catch (err) {
-          console.error('Barcode detection error:', err);
+          console.error('Detection error:', err);
         }
         
         // Continue scanning
-        requestAnimationFrame(detectBarcode);
+        if (scanning) {
+          requestAnimationFrame(detectBarcode);
+        }
       };
       
       detectBarcode();
+      return;
     } catch (err) {
-      console.error('BarcodeDetector error:', err);
-      showToast('⚠️ Barcode detection not fully supported. Using fallback method.', 'info');
-      useZXingFallback(video);
+      console.error('BarcodeDetector setup error:', err);
     }
-  } else {
-    // Fallback: Use ZXing library
-    useZXingFallback(video);
   }
-}
-
-// Fallback using ZXing browser library
-function useZXingFallback(video) {
-  // Dynamically load ZXing library
-  if (typeof ZXing === 'undefined') {
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@zxing/library@latest';
-    script.onload = () => {
-      initZXingScanner(video);
-    };
-    script.onerror = () => {
-      showToast('❌ Failed to load barcode scanner. Please check internet connection.', 'error');
-      closeBarcodeScanner();
-    };
-    document.head.appendChild(script);
-  } else {
-    initZXingScanner(video);
-  }
-}
-
-// Initialize ZXing scanner
-function initZXingScanner(video) {
-  const codeReader = new ZXing.BrowserMultiFormatReader();
   
-  codeReader.decodeFromVideoElement(video, (result, err) => {
-    if (result && scanning) {
-      handleBarcodeDetected(result.text);
+  // Method 2: Use Quagga.js library as fallback
+  console.log('BarcodeDetector not available, loading Quagga.js...');
+  loadQuaggaScanner(video);
+}
+
+// Load and initialize Quagga.js library
+function loadQuaggaScanner(video) {
+  if (typeof Quagga !== 'undefined') {
+    console.log('Quagga already loaded');
+    initQuaggaScanner(video);
+    return;
+  }
+  
+  console.log('Loading Quagga.js library...');
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js';
+  script.onload = () => {
+    console.log('Quagga.js loaded successfully');
+    initQuaggaScanner(video);
+  };
+  script.onerror = () => {
+    console.error('Failed to load Quagga.js');
+    showToast('❌ Failed to load barcode scanner. Please check internet connection.', 'error');
+    closeBarcodeScanner();
+  };
+  document.head.appendChild(script);
+}
+
+// Initialize Quagga scanner
+function initQuaggaScanner(video) {
+  console.log('Initializing Quagga scanner...');
+  
+  const config = {
+    inputStream: {
+      type: 'LiveStream',
+      target: video,
+      constraints: {
+        facingMode: 'environment',
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      }
+    },
+    decoder: {
+      readers: [
+        'ean_reader',
+        'ean_8_reader',
+        'upc_reader',
+        'upc_e_reader',
+        'code_128_reader',
+        'code_39_reader',
+        'code_93_reader',
+        'i2of5_reader',
+        'codabar_reader'
+      ],
+      multiple: false
+    },
+    locator: {
+      patchSize: 'medium',
+      halfSample: true
+    },
+    numOfWorkers: 2,
+    frequency: 10,
+    locate: true
+  };
+  
+  Quagga.init(config, (err) => {
+    if (err) {
+      console.error('Quagga initialization error:', err);
+      showToast('❌ Failed to initialize scanner', 'error');
+      closeBarcodeScanner();
+      return;
     }
-    // Continue scanning even if error
+    
+    console.log('Quagga initialized successfully');
+    Quagga.start();
+    
+    Quagga.onDetected((result) => {
+      if (scanning && result && result.codeResult && result.codeResult.code) {
+        const barcode = result.codeResult.code;
+        console.log('Quagga detected barcode:', barcode);
+        
+        // Stop Quagga
+        Quagga.stop();
+        
+        handleBarcodeDetected(barcode);
+      }
+    });
   });
 }
 
