@@ -10,6 +10,7 @@ class FirebaseHouseholdSync {
     this.deviceName = localStorage.getItem('deviceName') || this.generateDeviceName();
     this.isHost = false;
     this.unsubscribe = null;
+    this.isUpdating = false; // Flag to prevent processing our own updates
     
     localStorage.setItem('deviceId', this.deviceId);
     localStorage.setItem('deviceName', this.deviceName);
@@ -182,12 +183,52 @@ class FirebaseHouseholdSync {
     
     console.log('👂 Listening for household changes...');
     
-    // Listen to data changes
-    this.householdRef.child('data').on('value', async (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        console.log('📥 Received household data update');
-        await this.mergeData(data);
+    // Listen to weeklog changes individually to avoid re-rendering on own writes
+    this.householdRef.child('data/weeklog').on('child_added', async (snapshot) => {
+      if (!this.isUpdating) {
+        console.log('📥 Weeklog item added:', snapshot.key);
+        const item = snapshot.val();
+        await tx('weeklog', 'readwrite', store => {
+          store.put(item);
+        });
+        renderDashboard();
+      }
+    });
+    
+    this.householdRef.child('data/weeklog').on('child_changed', async (snapshot) => {
+      if (!this.isUpdating) {
+        console.log('📥 Weeklog item changed:', snapshot.key);
+        const item = snapshot.val();
+        await tx('weeklog', 'readwrite', store => {
+          store.put(item);
+        });
+        renderDashboard();
+      }
+    });
+    
+    this.householdRef.child('data/weeklog').on('child_removed', async (snapshot) => {
+      if (!this.isUpdating) {
+        console.log('📥 Weeklog item removed:', snapshot.key);
+        await tx('weeklog', 'readwrite', store => {
+          store.delete(Number(snapshot.key));
+        });
+        renderDashboard();
+      }
+    });
+    
+    // Listen to pantry changes
+    this.householdRef.child('data/pantry').on('child_added', async (snapshot) => {
+      if (!this.isUpdating) {
+        console.log('📥 Pantry item added:', snapshot.key);
+        await putPantry(snapshot.val());
+        renderDashboard();
+      }
+    });
+    
+    this.householdRef.child('data/pantry').on('child_changed', async (snapshot) => {
+      if (!this.isUpdating) {
+        console.log('📥 Pantry item changed:', snapshot.key);
+        await putPantry(snapshot.val());
         renderDashboard();
       }
     });
@@ -215,21 +256,33 @@ class FirebaseHouseholdSync {
   async broadcastUpdate(update) {
     if (!this.householdRef) return;
     
-    console.log('📤 Broadcasting update:', update.action);
+    console.log('📤 Broadcasting update:', update.action, update.data);
     
     try {
+      // Set flag to prevent processing our own update
+      this.isUpdating = true;
+      
       // Update specific data based on action
       if (update.action === 'add-weeklog') {
         await this.householdRef.child('data/weeklog/' + update.data.id).set(update.data);
+        console.log('✅ Weeklog added to Firebase:', update.data.id);
       } else if (update.action === 'delete-weeklog') {
         await this.householdRef.child('data/weeklog/' + update.data.id).remove();
+        console.log('✅ Weeklog deleted from Firebase:', update.data.id);
       } else if (update.action === 'update-pantry') {
         await this.householdRef.child('data/pantry/' + update.data.item).set(update.data);
+        console.log('✅ Pantry updated in Firebase:', update.data.item);
       }
       
-      console.log('✅ Update broadcasted');
+      // Reset flag after a short delay
+      setTimeout(() => {
+        this.isUpdating = false;
+      }, 500);
+      
+      console.log('✅ Update broadcasted successfully');
     } catch (err) {
       console.error('❌ Failed to broadcast update:', err);
+      this.isUpdating = false;
     }
   }
   
