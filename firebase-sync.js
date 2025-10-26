@@ -567,6 +567,45 @@ class FirebaseHouseholdSync {
     showToast('✓ Left household', 'info');
   }
   
+  async removeMember(deviceId) {
+    if (!this.isHost) {
+      showToast('❌ Only the host can remove members', 'error');
+      return;
+    }
+    
+    if (deviceId === this.deviceId) {
+      showToast('❌ You cannot remove yourself', 'error');
+      return;
+    }
+    
+    try {
+      // Get device info before removing
+      const deviceSnapshot = await this.householdRef.child('devices/' + deviceId).once('value');
+      const deviceInfo = deviceSnapshot.val();
+      
+      if (!deviceInfo) {
+        showToast('❌ Device not found', 'error');
+        return;
+      }
+      
+      // Confirm removal
+      if (!confirm(`Remove "${deviceInfo.name}" from household?`)) {
+        return;
+      }
+      
+      // Remove device from Firebase
+      await this.householdRef.child('devices/' + deviceId).remove();
+      
+      showToast(`✓ Removed ${deviceInfo.name} from household`, 'success');
+      this.updateUI();
+      
+      console.log('✅ Member removed:', deviceId);
+    } catch (err) {
+      console.error('❌ Failed to remove member:', err);
+      showToast('❌ Failed to remove member: ' + err.message, 'error');
+    }
+  }
+  
   isConnected() {
     return this.householdCode !== null && this.householdRef !== null;
   }
@@ -587,23 +626,54 @@ class FirebaseHouseholdSync {
       document.getElementById('syncStatus').textContent = '● Connected';
       document.getElementById('syncStatus').style.color = '#10b981';
       
-      // Get device count from Firebase
+      // Get device list from Firebase
       if (this.householdRef) {
         try {
           const snapshot = await this.householdRef.child('devices').once('value');
           const devices = snapshot.val() || {};
-          const deviceList = Object.entries(devices).map(([id, info]) => {
+          const deviceEntries = Object.entries(devices);
+          
+          document.getElementById('deviceCount').textContent = deviceEntries.length;
+          
+          // Build device list HTML with remove buttons for host
+          const deviceListEl = document.getElementById('deviceList');
+          deviceListEl.innerHTML = deviceEntries.map(([id, info]) => {
             const isYou = id === this.deviceId;
             const isHost = info.isHost;
+            const canRemove = this.isHost && !isYou; // Host can remove others, but not themselves
+            
             let label = info.name;
-            if (isHost) label += ' (Host';
-            if (isYou) label += isHost ? ', You)' : ' (You)';
-            else if (isHost) label += ')';
-            return label;
-          });
+            let badge = '';
+            
+            if (isHost) {
+              badge = '<span style="background:#2563eb;color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:6px">HOST</span>';
+            }
+            if (isYou) {
+              badge += '<span style="background:#059669;color:#fff;padding:2px 6px;border-radius:4px;font-size:10px;margin-left:6px">YOU</span>';
+            }
+            
+            const lastSeen = info.lastSeen ? new Date(info.lastSeen) : null;
+            const timeDiff = lastSeen ? Date.now() - lastSeen.getTime() : 0;
+            const isOnline = timeDiff < 60000; // Online if seen within last minute
+            const statusDot = isOnline ? '🟢' : '🔴';
+            
+            const removeBtn = canRemove 
+              ? `<button onclick="householdSync.removeMember('${id}')" class="small danger" style="padding:4px 8px;font-size:10px">✕ Remove</button>` 
+              : '';
+            
+            return `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px;background:#1f2937;border-radius:6px;gap:8px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12px;color:#e5e7eb;display:flex;align-items:center;gap:4px">
+                    ${statusDot} <span style="font-weight:500">${label}</span>${badge}
+                  </div>
+                  <div style="font-size:10px;color:#6b7280;margin-top:2px">Device ID: ${id.slice(0, 12)}...</div>
+                </div>
+                ${removeBtn}
+              </div>
+            `;
+          }).join('');
           
-          document.getElementById('deviceCount').textContent = deviceList.length;
-          document.getElementById('deviceList').textContent = deviceList.join(' • ');
         } catch (err) {
           console.error('Failed to get devices:', err);
         }
