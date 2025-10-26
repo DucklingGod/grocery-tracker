@@ -445,32 +445,64 @@ class HouseholdSync {
   }
   
   updateUI() {
+    console.log('🎨 updateUI called - householdCode:', this.householdCode, 'peer:', !!this.peer);
+    
     const isConnected = this.householdCode !== null && this.peer !== null;
     
-    document.getElementById('householdNotConnected').style.display = isConnected ? 'none' : 'block';
-    document.getElementById('householdConnected').style.display = isConnected ? 'block' : 'none';
+    const notConnectedEl = document.getElementById('householdNotConnected');
+    const connectedEl = document.getElementById('householdConnected');
+    
+    console.log('🎨 DOM elements found:', {
+      notConnected: !!notConnectedEl,
+      connected: !!connectedEl,
+      isConnected: isConnected
+    });
+    
+    if (!notConnectedEl || !connectedEl) {
+      console.error('❌ Household UI elements not found in DOM!');
+      return;
+    }
+    
+    notConnectedEl.style.display = isConnected ? 'none' : 'block';
+    connectedEl.style.display = isConnected ? 'block' : 'none';
     
     if (isConnected) {
-      document.getElementById('householdCode').textContent = this.householdCode;
-      document.getElementById('deviceCount').textContent = (this.connections.size + 1).toString();
+      const codeEl = document.getElementById('householdCode');
+      const countEl = document.getElementById('deviceCount');
+      const statusEl = document.getElementById('syncStatus');
+      const listEl = document.getElementById('deviceList');
+      
+      console.log('🎨 Connected UI elements:', {
+        code: !!codeEl,
+        count: !!countEl,
+        status: !!statusEl,
+        list: !!listEl
+      });
+      
+      if (codeEl) codeEl.textContent = this.householdCode;
+      if (countEl) countEl.textContent = (this.connections.size + 1).toString();
       
       const status = this.peer && this.peer.open ? '● Connected' : '○ Connecting...';
       const color = this.peer && this.peer.open ? '#10b981' : '#f59e0b';
-      document.getElementById('syncStatus').textContent = status;
-      document.getElementById('syncStatus').style.color = color;
+      if (statusEl) {
+        statusEl.textContent = status;
+        statusEl.style.color = color;
+      }
       
       // Update device list with names
-      const deviceList = document.getElementById('deviceList');
-      const devices = [this.deviceName + (this.isHost ? ' (Host - You)' : ' (You)')];
-      
-      this.connections.forEach((conn, peerId) => {
-        if (conn.open) {
-          const deviceName = this.deviceNames.get(peerId) || 'Unknown Device';
-          devices.push(deviceName);
-        }
-      });
-      
-      deviceList.textContent = devices.join(' • ');
+      if (listEl) {
+        const devices = [this.deviceName + (this.isHost ? ' (Host - You)' : ' (You)')];
+        
+        this.connections.forEach((conn, peerId) => {
+          if (conn.open) {
+            const deviceName = this.deviceNames.get(peerId) || 'Unknown Device';
+            devices.push(deviceName);
+          }
+        });
+        
+        listEl.textContent = devices.join(' • ');
+        console.log('🎨 Device list updated:', devices);
+      }
     }
   }
   
