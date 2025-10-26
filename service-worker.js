@@ -1,9 +1,10 @@
-const CACHE_NAME = 'grocery-cache-v22';
+const CACHE_NAME = 'grocery-cache-v23';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './config.js',
+  './translations.js',
   './app.js',
   './charts.js',
   './firebase-sync.js',

@@ -909,3 +909,29 @@ window.addEventListener('resize', ()=>{
     }
   }, 250);
 });
+
+// Language Selection Handler
+document.getElementById('languageSelect')?.addEventListener('change', (e) => {
+  const selectedLang = e.target.value;
+  setLanguage(selectedLang);
+  showToast(t('languageChanged'), 'success');
+  
+  // Re-render current view to update translations
+  const activeView = $('.view.active');
+  if(activeView) {
+    if(activeView.id === 'view-dashboard') renderDashboard();
+    if(activeView.id === 'view-weeklog') renderWeekLog();
+    if(activeView.id === 'view-pantry') renderPantry();
+    if(activeView.id === 'view-waste') renderWaste();
+  }
+});
+
+// Initialize language on page load
+window.addEventListener('load', () => {
+  const currentLang = getCurrentLanguage();
+  const langSelect = document.getElementById('languageSelect');
+  if(langSelect) {
+    langSelect.value = currentLang;
+  }
+  updateUI();
+});

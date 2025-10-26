@@ -245,25 +245,15 @@ function appendAIMessage(type, content) {
 }
 
 function showGreeting() {
-  const greetingMessage = `👋 **Hello! I'm your Grocery Assistant**
-
-I can help you with:
-- **Recipe Ideas** - Suggest dishes based on your pantry items
-- **Shopping Lists** - Create lists from your inventory needs
-- **Meal Planning** - Plan meals for the week
-- **Reduce Waste** - Tips on using items before they expire
-- **Answer Questions** - About your pantry, purchases, or waste log
-
-Just type your question or use the quick prompts below! 🍳`;
-
+  const greetingMessage = t('aiGreeting');
   appendAIMessage('assistant', greetingMessage);
 }
 
 function clearAIChat() {
-  if (confirm('Clear chat history?')) {
+  if (confirm(t('confirmClearChat'))) {
     document.getElementById('aiChatBox').innerHTML = '';
     groceryAI.clearHistory();
-    showToast('✓ Chat cleared', 'info');
+    showToast(t('chatCleared'), 'info');
     // Show greeting after clearing
     showGreeting();
   }
@@ -279,11 +269,14 @@ function saveGroqApiKey() {
   }
   
   groceryAI.setApiKey(key);
-  showToast('✓ OpenAI API key saved', 'success');
+  showToast(t('apiKeySaved'), 'success');
   
   // Hide setup, show chat
   document.getElementById('aiSetup').style.display = 'none';
   document.getElementById('aiChatInterface').style.display = 'block';
+  
+  // Show greeting
+  showGreeting();
 }
 
 // Initialize on app load
