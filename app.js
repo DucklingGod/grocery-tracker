@@ -73,6 +73,13 @@ $$('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
   if(v==='weeklog') renderWeekLog();
   if(v==='pantry') renderPantry();
   if(v==='waste') renderWaste();
+  if(v==='ai') {
+    // Show greeting if chat is empty
+    const chatBox = document.getElementById('aiChatBox');
+    if(chatBox && chatBox.children.length === 0 && typeof showGreeting === 'function'){
+      showGreeting();
+    }
+  }
 }));
 
 // --- Conditional Form Fields ---

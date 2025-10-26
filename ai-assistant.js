@@ -244,11 +244,28 @@ function appendAIMessage(type, content) {
   return messageId;
 }
 
+function showGreeting() {
+  const greetingMessage = `👋 **Hello! I'm your Grocery Assistant**
+
+I can help you with:
+- **Recipe Ideas** - Suggest dishes based on your pantry items
+- **Shopping Lists** - Create lists from your inventory needs
+- **Meal Planning** - Plan meals for the week
+- **Reduce Waste** - Tips on using items before they expire
+- **Answer Questions** - About your pantry, purchases, or waste log
+
+Just type your question or use the quick prompts below! 🍳`;
+
+  appendAIMessage('assistant', greetingMessage);
+}
+
 function clearAIChat() {
   if (confirm('Clear chat history?')) {
     document.getElementById('aiChatBox').innerHTML = '';
     groceryAI.clearHistory();
     showToast('✓ Chat cleared', 'info');
+    // Show greeting after clearing
+    showGreeting();
   }
 }
 
@@ -289,6 +306,8 @@ if (typeof window !== 'undefined') {
       if (hasKey) {
         document.getElementById('aiSetup').style.display = 'none';
         document.getElementById('aiChatInterface').style.display = 'block';
+        // Show greeting message on load
+        showGreeting();
       } else {
         document.getElementById('aiSetup').style.display = 'block';
         document.getElementById('aiChatInterface').style.display = 'none';
