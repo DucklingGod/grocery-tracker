@@ -1,4 +1,4 @@
-const CACHE_NAME = 'grocery-cache-v21';
+const CACHE_NAME = 'grocery-cache-v22';
 const ASSETS = [
   './',
   './index.html',
@@ -10,7 +10,8 @@ const ASSETS = [
   './ai-assistant.js',
   './manifest.json',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  './NotoSansThai-Regular.ttf'
 ];
 self.addEventListener('install', e=>{
   e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)));
