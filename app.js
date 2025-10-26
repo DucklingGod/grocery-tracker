@@ -65,6 +65,10 @@ $$('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{
   const v = btn.getAttribute('data-view');
   $$('.view').forEach(x=>x.classList.remove('active'));
   $('#view-'+v).classList.add('active');
+  
+  // Save current view to localStorage
+  localStorage.setItem('lastActiveView', v);
+  
   if(v==='dashboard') renderDashboard();
   if(v==='weeklog') renderWeekLog();
   if(v==='pantry') renderPantry();
@@ -854,6 +858,19 @@ $('#btnWipe').addEventListener('click', async ()=>{
 
 // Init
 openDB().then(async ()=>{
+  // Restore last active view
+  const lastView = localStorage.getItem('lastActiveView') || 'dashboard';
+  const lastViewBtn = document.querySelector(`.nav-btn[data-view="${lastView}"]`);
+  if(lastViewBtn){
+    // Remove default active states
+    $$('.nav-btn').forEach(b=>b.classList.remove('active'));
+    $$('.view').forEach(x=>x.classList.remove('active'));
+    
+    // Set saved view as active
+    lastViewBtn.classList.add('active');
+    $('#view-'+lastView).classList.add('active');
+  }
+  
   // default today date in Quick Add
   $('#qaPurchase').value = new Date().toISOString().slice(0,10);
   $('#qaUsedDate').value = new Date().toISOString().slice(0,10);
