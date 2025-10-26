@@ -7,10 +7,7 @@ cat > config.js << EOF
 // Auto-generated configuration for production
 window.APP_CONFIG = {
   OPENAI_API_KEY: '${OPENAI_API_KEY}',
-  AI_MODEL: 'gpt-5-mini',
-  AI_REASONING_EFFORT: 'low',
-  AI_VERBOSITY: 'medium',
-  AI_MAX_TOKENS: 1024
+  AI_MODEL: 'gpt-4o-mini'
 };
 
 console.log('✅ Config loaded:', { hasAPIKey: !!window.APP_CONFIG.OPENAI_API_KEY });
