@@ -249,7 +249,7 @@ function initQuaggaScanner(video) {
 }
 
 // Handle detected barcode
-function handleBarcodeDetected(barcode) {
+async function handleBarcodeDetected(barcode) {
   if (!barcode || barcode.length < 8) {
     console.log('Barcode too short, ignoring:', barcode);
     return; // Ignore partial/invalid barcodes
@@ -263,13 +263,22 @@ function handleBarcodeDetected(barcode) {
   resultDiv.textContent = `✓ Barcode: ${barcode}`;
   resultDiv.classList.add('show');
   
-  // Look up product in database
+  // Show loading state
+  showToast('🔍 กำลังค้นหาสินค้า...', 'info');
+  
+  // 1. Check local product database first
   let product = productDatabase[barcode];
   
-  // If not in database, check localStorage for previously scanned items
+  // 2. Check localStorage for previously scanned items
   if (!product) {
     const savedProducts = JSON.parse(localStorage.getItem('scannedProducts') || '{}');
     product = savedProducts[barcode];
+  }
+  
+  // 3. If not found locally, try Open Food Facts API
+  if (!product) {
+    console.log('Product not in local database, querying Open Food Facts...');
+    product = await fetchProductFromOpenFoodFacts(barcode);
   }
   
   if (product) {
@@ -280,9 +289,12 @@ function handleBarcodeDetected(barcode) {
       document.getElementById('qaCategory').value = product.category;
     }
     showToast(`✓ พบสินค้า: ${product.name}`, 'success');
+    
+    // Save to localStorage for faster future access
+    saveScannedProduct(barcode, product.name, product.category);
   } else {
-    // Just fill in a generic name with barcode
-    console.log('Product not in database, using generic name');
+    // Product not found anywhere
+    console.log('Product not found in any database');
     const itemName = `สินค้า ${barcode}`;
     document.getElementById('qaItem').value = itemName;
     showToast(`✓ สแกนบาร์โค้ด: ${barcode}. กรุณากรอกชื่อสินค้า`, 'info');
@@ -291,10 +303,10 @@ function handleBarcodeDetected(barcode) {
     saveScannedProduct(barcode, itemName);
   }
   
-  // Close scanner after 1.5 seconds
+  // Close scanner after 2 seconds (extra time for API call)
   setTimeout(() => {
     closeBarcodeScanner();
-  }, 1500);
+  }, 2000);
 }
 
 // Save scanned product to localStorage
@@ -303,6 +315,99 @@ function saveScannedProduct(barcode, name, category = null) {
   savedProducts[barcode] = { name, category };
   localStorage.setItem('scannedProducts', JSON.stringify(savedProducts));
   console.log('Saved product to localStorage:', barcode, name);
+}
+
+// Fetch product information from Open Food Facts API
+async function fetchProductFromOpenFoodFacts(barcode) {
+  try {
+    console.log('Fetching from Open Food Facts API...');
+    const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`);
+    
+    if (!response.ok) {
+      console.log('API request failed:', response.status);
+      return null;
+    }
+    
+    const data = await response.json();
+    console.log('Open Food Facts response:', data);
+    
+    if (data.status === 1 && data.product) {
+      const product = data.product;
+      
+      // Get product name (prefer Thai, fallback to English, then generic)
+      let name = product.product_name_th || 
+                 product.product_name_en || 
+                 product.product_name || 
+                 product.generic_name ||
+                 `สินค้า ${barcode}`;
+      
+      // Try to map Open Food Facts categories to our categories
+      const category = mapOpenFoodFactsCategory(product);
+      
+      console.log('Product found on Open Food Facts:', { name, category });
+      
+      return { name, category };
+    } else {
+      console.log('Product not found in Open Food Facts database');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching from Open Food Facts:', error);
+    return null;
+  }
+}
+
+// Map Open Food Facts categories to our app categories
+function mapOpenFoodFactsCategory(product) {
+  const categories = product.categories_tags || product.categories || '';
+  const categoryStr = categories.toString().toLowerCase();
+  
+  // Map to our categories
+  if (categoryStr.includes('meat') || categoryStr.includes('poultry') || categoryStr.includes('chicken') || categoryStr.includes('pork') || categoryStr.includes('beef')) {
+    return 'Meat & Poultry';
+  }
+  if (categoryStr.includes('fish') || categoryStr.includes('seafood') || categoryStr.includes('shrimp')) {
+    return 'Seafood';
+  }
+  if (categoryStr.includes('vegetable') || categoryStr.includes('greens')) {
+    return 'Vegetables';
+  }
+  if (categoryStr.includes('fruit')) {
+    return 'Fruits';
+  }
+  if (categoryStr.includes('dairy') || categoryStr.includes('milk') || categoryStr.includes('cheese') || categoryStr.includes('yogurt') || categoryStr.includes('egg')) {
+    return 'Dairy & Eggs';
+  }
+  if (categoryStr.includes('bread') || categoryStr.includes('cereal') || categoryStr.includes('grain') || categoryStr.includes('rice') || categoryStr.includes('pasta')) {
+    return 'Grains & Bread';
+  }
+  if (categoryStr.includes('herb') || categoryStr.includes('spice') || categoryStr.includes('seasoning')) {
+    return 'Herbs & Spices';
+  }
+  if (categoryStr.includes('sauce') || categoryStr.includes('condiment') || categoryStr.includes('dressing')) {
+    return 'Condiments & Sauces';
+  }
+  if (categoryStr.includes('oil') || categoryStr.includes('fat') || categoryStr.includes('butter')) {
+    return 'Oils & Fats';
+  }
+  if (categoryStr.includes('canned') || categoryStr.includes('preserved')) {
+    return 'Canned & Jarred';
+  }
+  if (categoryStr.includes('frozen')) {
+    return 'Frozen Foods';
+  }
+  if (categoryStr.includes('snack') || categoryStr.includes('chip') || categoryStr.includes('cookie')) {
+    return 'Snacks';
+  }
+  if (categoryStr.includes('beverage') || categoryStr.includes('drink') || categoryStr.includes('juice') || categoryStr.includes('soda')) {
+    return 'Beverages';
+  }
+  if (categoryStr.includes('baking') || categoryStr.includes('flour') || categoryStr.includes('sugar')) {
+    return 'Baking Supplies';
+  }
+  
+  // Default category
+  return 'Other';
 }
 
 // Initialize barcode scanner button
