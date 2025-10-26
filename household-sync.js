@@ -5,18 +5,29 @@ class HouseholdSync {
   constructor() {
     this.peer = null;
     this.connections = new Map(); // peerId -> connection
+    this.deviceNames = new Map(); // peerId -> device name
     this.householdCode = localStorage.getItem('householdCode') || null;
     this.deviceId = localStorage.getItem('deviceId') || this.generateDeviceId();
+    this.deviceName = localStorage.getItem('deviceName') || this.generateDeviceName();
     this.isHost = false;
     this.syncCallbacks = [];
     this.lastSyncTime = 0;
     
-    // Store device ID
+    // Store device ID and name
     localStorage.setItem('deviceId', this.deviceId);
+    localStorage.setItem('deviceName', this.deviceName);
   }
   
   generateDeviceId() {
     return 'device-' + Math.random().toString(36).substr(2, 9);
+  }
+  
+  generateDeviceName() {
+    const adjectives = ['Quick', 'Smart', 'Happy', 'Cool', 'Fresh', 'Bright'];
+    const nouns = ['Chef', 'Cook', 'Baker', 'Shopper', 'Helper', 'Planner'];
+    const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    return `${adj} ${noun}`;
   }
   
   generateHouseholdCode() {
@@ -156,15 +167,29 @@ class HouseholdSync {
       await this.handleMessage(data, conn);
     });
     
+    conn.on('open', () => {
+      console.log('Connection opened:', conn.peer);
+      // Send hello message with device name
+      conn.send({
+        type: 'hello',
+        deviceId: this.deviceId,
+        deviceName: this.deviceName,
+        isHost: this.isHost
+      });
+      this.updateUI();
+    });
+    
     conn.on('close', () => {
       console.log('Connection closed:', conn.peer);
       this.connections.delete(conn.peer);
+      this.deviceNames.delete(conn.peer);
       this.updateUI();
     });
     
     conn.on('error', (err) => {
       console.error('Connection error:', err);
       this.connections.delete(conn.peer);
+      this.deviceNames.delete(conn.peer);
       this.updateUI();
     });
     
@@ -175,6 +200,30 @@ class HouseholdSync {
     console.log('Received message:', data.type);
     
     switch (data.type) {
+      case 'hello':
+        // Store device info
+        this.deviceNames.set(conn.peer, data.deviceName || 'Unknown Device');
+        this.updateUI();
+        
+        // Send hello back
+        conn.send({
+          type: 'hello',
+          deviceId: this.deviceId,
+          deviceName: this.deviceName,
+          isHost: this.isHost
+        });
+        
+        // If we're host, send full data
+        if (this.isHost) {
+          const fullData = await this.getLocalData();
+          conn.send({
+            type: 'sync-data',
+            data: fullData,
+            timestamp: Date.now()
+          });
+        }
+        break;
+      
       case 'sync-request':
         // Send full data to requester
         const fullData = await this.getLocalData();
@@ -192,16 +241,27 @@ class HouseholdSync {
         break;
         
       case 'update':
-        // Apply single update
-        await this.applyUpdate(data.update);
+        // Apply single update (skip if from ourselves)
+        if (data.deviceId !== this.deviceId) {
+          await this.applyUpdate(data.update);
+          showToast('📥 Update received from household', 'info');
+        }
         break;
         
       case 'ping':
-        conn.send({ type: 'pong', deviceId: this.deviceId });
+        conn.send({ 
+          type: 'pong', 
+          deviceId: this.deviceId,
+          deviceName: this.deviceName
+        });
         break;
         
       case 'pong':
-        // Update device list
+        // Store device info from pong
+        if (data.deviceName) {
+          this.deviceNames.set(conn.peer, data.deviceName);
+          this.updateUI();
+        }
         break;
     }
   }
@@ -242,30 +302,38 @@ class HouseholdSync {
   
   async applyUpdate(update) {
     // Apply a single update (add, modify, delete)
-    switch (update.action) {
-      case 'add-weeklog':
-        const store = tx('weeklog', 'readwrite');
-        await new Promise((resolve, reject) => {
-          const req = store.add(update.data);
-          req.onsuccess = resolve;
-          req.onerror = () => reject(req.error);
-        });
-        break;
-        
-      case 'update-pantry':
-        await putPantry(update.data);
-        break;
-        
-      case 'delete-weeklog':
-        await deleteWeekLog(update.id);
-        break;
+    try {
+      switch (update.action) {
+        case 'add-weeklog':
+          const store = tx('weeklog', 'readwrite');
+          // Remove id if it exists to avoid conflicts
+          const dataToAdd = {...update.data};
+          delete dataToAdd.id;
+          await new Promise((resolve, reject) => {
+            const req = store.add(dataToAdd);
+            req.onsuccess = resolve;
+            req.onerror = () => reject(req.error);
+          });
+          break;
+          
+        case 'update-pantry':
+          await putPantry(update.data);
+          break;
+          
+        case 'delete-weeklog':
+          await deleteWeekLog(update.id || update.data?.id);
+          break;
+      }
+      
+      // Refresh views
+      renderDashboard();
+      renderWeekLog();
+      renderPantry();
+      renderWaste();
+    } catch (err) {
+      console.error('Error applying update:', err);
+      // Continue even if error - maybe item already exists
     }
-    
-    // Refresh views
-    renderDashboard();
-    renderWeekLog();
-    renderPantry();
-    renderWaste();
   }
   
   broadcastUpdate(update) {
@@ -342,14 +410,17 @@ class HouseholdSync {
       document.getElementById('syncStatus').textContent = status;
       document.getElementById('syncStatus').style.color = color;
       
-      // Update device list
+      // Update device list with names
       const deviceList = document.getElementById('deviceList');
-      const devices = ['You' + (this.isHost ? ' (Host)' : '')];
+      const devices = [this.deviceName + (this.isHost ? ' (Host - You)' : ' (You)')];
+      
       this.connections.forEach((conn, peerId) => {
         if (conn.open) {
-          devices.push(peerId.replace('household-', '').replace('device-', '...'));
+          const deviceName = this.deviceNames.get(peerId) || 'Unknown Device';
+          devices.push(deviceName);
         }
       });
+      
       deviceList.textContent = devices.join(' • ');
     }
   }
