@@ -104,6 +104,13 @@ Be helpful, concise, and practical. Use Thai ingredient names when appropriate. 
     }
 
     try {
+      console.log('🤖 Sending request to OpenAI...', {
+        endpoint: this.apiEndpoint,
+        model: this.model,
+        hasApiKey: !!this.apiKey,
+        apiKeyStart: this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'none'
+      });
+
       const response = await fetch(this.apiEndpoint, {
         method: 'POST',
         headers: {
@@ -121,12 +128,16 @@ Be helpful, concise, and practical. Use Thai ingredient names when appropriate. 
         })
       });
 
+      console.log('📡 Response status:', response.status, response.statusText);
+
       if (!response.ok) {
         const error = await response.json();
+        console.error('❌ API Error:', error);
         throw new Error(error.error?.message || 'API request failed');
       }
 
       const data = await response.json();
+      console.log('✅ API Response:', data);
       const assistantMessage = data.choices[0].message.content;
 
       // Add assistant response to history
