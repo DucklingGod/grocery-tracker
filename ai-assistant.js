@@ -213,13 +213,28 @@ function appendAIMessage(type, content) {
   const bgColor = type === 'user' ? '#2563eb' : type === 'error' ? '#dc2626' : '#374151';
   const align = type === 'user' ? 'flex-end' : 'flex-start';
   
+  // Convert markdown to HTML for assistant messages
+  let formattedContent = content;
+  if (type === 'assistant') {
+    formattedContent = content
+      .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>') // ***bold italic***
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // **bold**
+      .replace(/\*(.+?)\*/g, '<em>$1</em>') // *italic*
+      .replace(/###\s+(.+)/g, '<h3 style="margin:8px 0;font-size:16px;font-weight:600">$1</h3>') // ### heading
+      .replace(/##\s+(.+)/g, '<h2 style="margin:10px 0;font-size:18px;font-weight:600">$1</h2>') // ## heading
+      .replace(/---/g, '<hr style="border:0;border-top:1px solid #4b5563;margin:12px 0">') // horizontal rule
+      .replace(/\n/g, '<br>'); // line breaks
+  } else {
+    formattedContent = content.replace(/\n/g, '<br>');
+  }
+  
   const messageEl = document.createElement('div');
   messageEl.id = messageId;
   messageEl.style.cssText = `display:flex;justify-content:${align};margin-bottom:12px;animation:slideIn 0.3s ease`;
   
   messageEl.innerHTML = `
-    <div style="max-width:80%;background:${bgColor};padding:12px 16px;border-radius:12px;color:#fff;font-size:14px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word">
-      ${content.replace(/\n/g, '<br>')}
+    <div style="max-width:80%;background:${bgColor};padding:12px 16px;border-radius:12px;color:#fff;font-size:14px;line-height:1.5;word-wrap:break-word">
+      ${formattedContent}
     </div>
   `;
   
