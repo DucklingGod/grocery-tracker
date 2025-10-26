@@ -5,9 +5,10 @@ class GroceryAI {
   constructor() {
     // API key will be set from external config
     this.apiKey = localStorage.getItem('openaiApiKey') || '';
-    this.apiEndpoint = 'https://api.openai.com/v1/chat/completions';
-    this.model = 'gpt-4o-mini'; // Fast, affordable, and capable
+    this.apiEndpoint = 'https://api.openai.com/v1/responses'; // New Responses API
+    this.model = 'gpt-5-mini'; // Latest GPT-5 mini model
     this.conversationHistory = [];
+    this.previousResponseId = null;
   }
 
   setApiKey(key) {
@@ -90,6 +91,9 @@ You can help with:
 
 Be helpful, concise, and practical. Use Thai ingredient names when appropriate. When suggesting recipes, format them nicely with ingredients and steps.`;
 
+    // Build input combining system context and user message
+    const input = `${systemPrompt}\n\nUser: ${userMessage}`;
+
     // Add user message to history
     this.conversationHistory.push({
       role: 'user',
@@ -102,22 +106,26 @@ Be helpful, concise, and practical. Use Thai ingredient names when appropriate. 
     }
 
     try {
+      const requestBody = {
+        model: this.model,
+        input: input,
+        reasoning: { effort: "low" }, // Fast responses for chat
+        text: { verbosity: "medium" },
+        max_output_tokens: 1024
+      };
+
+      // Pass previous response ID for better context
+      if (this.previousResponseId) {
+        requestBody.previous_response_id = this.previousResponseId;
+      }
+
       const response = await fetch(this.apiEndpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          model: this.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...this.conversationHistory
-          ],
-          temperature: 0.7,
-          max_tokens: 1024,
-          stream: false
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -126,7 +134,10 @@ Be helpful, concise, and practical. Use Thai ingredient names when appropriate. 
       }
 
       const data = await response.json();
-      const assistantMessage = data.choices[0].message.content;
+      const assistantMessage = data.output_text;
+      
+      // Store response ID for next turn
+      this.previousResponseId = data.id;
 
       // Add assistant response to history
       this.conversationHistory.push({
@@ -144,6 +155,7 @@ Be helpful, concise, and practical. Use Thai ingredient names when appropriate. 
 
   clearHistory() {
     this.conversationHistory = [];
+    this.previousResponseId = null;
   }
 }
 
