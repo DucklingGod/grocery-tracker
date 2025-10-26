@@ -1,6 +1,32 @@
 // Firebase-based Household Sync
 // Much more reliable than P2P WebRTC
 
+// Helper function for IndexedDB transactions with callback pattern
+function tx(storeName, mode, callback) {
+  return new Promise((resolve, reject) => {
+    try {
+      if (!db) {
+        reject(new Error('Database not initialized'));
+        return;
+      }
+      const transaction = db.transaction(storeName, mode);
+      const store = transaction.objectStore(storeName);
+      const result = callback(store);
+      
+      if (result && result.then) {
+        // If callback returns a promise, wait for it
+        result.then(resolve).catch(reject);
+      } else {
+        // Otherwise just resolve
+        transaction.oncomplete = () => resolve(result);
+        transaction.onerror = () => reject(transaction.error);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 class FirebaseHouseholdSync {
   constructor() {
     this.db = null;
