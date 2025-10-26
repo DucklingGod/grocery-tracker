@@ -5,7 +5,7 @@ echo "Creating config.js from environment variable..."
 
 cat > config.js << EOF
 // Auto-generated configuration for production
-const CONFIG = {
+window.APP_CONFIG = {
   OPENAI_API_KEY: '${OPENAI_API_KEY}',
   AI_MODEL: 'gpt-5-mini',
   AI_REASONING_EFFORT: 'low',
@@ -13,9 +13,7 @@ const CONFIG = {
   AI_MAX_TOKENS: 1024
 };
 
-if (typeof window !== 'undefined') {
-  window.APP_CONFIG = CONFIG;
-}
+console.log('✅ Config loaded:', { hasAPIKey: !!window.APP_CONFIG.OPENAI_API_KEY });
 EOF
 
 echo "config.js created successfully!"

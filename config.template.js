@@ -1,7 +1,7 @@
 // Configuration Template
 // Copy this file to 'config.js' and add your API keys
 
-const CONFIG = {
+window.APP_CONFIG = {
   // OpenAI API Key - Get from https://platform.openai.com/api-keys
   OPENAI_API_KEY: 'your-api-key-here',
   
@@ -12,7 +12,4 @@ const CONFIG = {
   AI_MAX_TOKENS: 1024
 };
 
-// Make config available globally
-if (typeof window !== 'undefined') {
-  window.APP_CONFIG = CONFIG;
-}
+console.log('✅ Config loaded:', { hasAPIKey: !!window.APP_CONFIG.OPENAI_API_KEY });
