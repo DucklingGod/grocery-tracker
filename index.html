@@ -32,30 +32,30 @@
   <section id="view-dashboard" class="view active">
     <!-- Quick Actions Bar -->
     <div class="card quick-actions-card">
-      <h3 style="border:none;margin-bottom:16px">🎯 Quick Actions</h3>
+      <h3 style="border:none;margin-bottom:16px" data-i18n="quickActions">🎯 Quick Actions</h3>
       <div class="quick-actions-grid">
         <button onclick="document.querySelector('[data-view=quickadd]').click()" class="quick-action-btn primary">
           <span class="quick-action-icon">➕</span>
-          <span class="quick-action-text">Add New Item</span>
+          <span class="quick-action-text" data-i18n="addNewItem">Add New Item</span>
         </button>
         <button onclick="document.querySelector('[data-view=pantry]').click()" class="quick-action-btn secondary">
           <span class="quick-action-icon">🥫</span>
-          <span class="quick-action-text">View Pantry</span>
+          <span class="quick-action-text" data-i18n="viewPantry">View Pantry</span>
         </button>
         <button id="btnViewExpiring" class="quick-action-btn secondary">
           <span class="quick-action-icon">⚠️</span>
-          <span class="quick-action-text">View Expiring Items</span>
+          <span class="quick-action-text" data-i18n="viewExpiring">View Expiring Items</span>
         </button>
         <button id="btnViewResupply" class="quick-action-btn secondary">
           <span class="quick-action-icon">🔄</span>
-          <span class="quick-action-text">View Items to Resupply</span>
+          <span class="quick-action-text" data-i18n="viewResupplyItems">View Items to Resupply</span>
         </button>
       </div>
     </div>
 
     <!-- KPIs Section -->
     <div class="card" style="margin-bottom:20px">
-      <h3>📊 Key Metrics (Last 7 days)</h3>
+      <h3 data-i18n="keyMetrics">📊 Key Metrics (Last 7 days)</h3>
       <div class="kpis">
         <div class="kpi kpi-clickable" onclick="document.getElementById('btnViewResupply').click()" title="Click to view items">
           <div class="kpi-label">🔄 To Resupply</div>

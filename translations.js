@@ -18,7 +18,22 @@ const translations = {
     viewExpiring: "View Expiring Items",
     viewResupply: "View Resupply Needs",
     
-    // KPIs
+    // Dashboard - additional
+    keyMetrics: "📊 Key Metrics (Last 7 days)",
+    toResupply: "🔄 To Resupply",
+    lowStockItems: "Low stock items",
+    expiringSoonLabel: "⚠️ Expiring Soon",
+    daysRemaining: "≤3 days remaining",
+    cookingCost: "🍳 Cooking Cost",
+    thisWeek: "฿ this week",
+    shoppingTotal: "🛒 Shopping Total",
+    wasteValue: "🗑 Waste Value",
+    viewResupplyItems: "View Items to Resupply",
+    
+    // Messages & Actions
+    clickToView: "Click to view items",
+    
+    // KPIs - complete translations
     totalItems: "Total Items",
     lowStock: "Low Stock",
     expiringSoon: "Expiring Soon",
@@ -179,6 +194,21 @@ Just type your question or use the quick prompts below! 🍳`,
     viewPantry: "ดูคลังสินค้า",
     viewExpiring: "ดูของใกล้หมดอายุ",
     viewResupply: "ดูของที่ต้องเติม",
+    
+    // Dashboard - additional
+    keyMetrics: "📊 ตัวชี้วัดหลัก (7 วันที่ผ่านมา)",
+    toResupply: "🔄 ต้องเติมสินค้า",
+    lowStockItems: "รายการสต็อกต่ำ",
+    expiringSoonLabel: "⚠️ ใกล้หมดอายุ",
+    daysRemaining: "≤3 วันที่เหลือ",
+    cookingCost: "🍳 ค่าทำอาหาร",
+    thisWeek: "฿ สัปดาห์นี้",
+    shoppingTotal: "🛒 ยอดช้อปปิ้ง",
+    wasteValue: "🗑 มูลค่าของเสีย",
+    viewResupplyItems: "ดูรายการที่ต้องเติม",
+    
+    // Messages & Actions
+    clickToView: "คลิกเพื่อดูรายการ",
     
     // KPIs
     totalItems: "รายการทั้งหมด",
@@ -371,5 +401,42 @@ function updateUI() {
         option.textContent = translations[lang][key];
       }
     });
+  });
+  
+  // Update KPI labels dynamically
+  const kpiTranslations = {
+    '🔄 To Resupply': t('toResupply'),
+    '⚠️ Expiring Soon': t('expiringSoonLabel'),
+    '🍳 Cooking Cost': t('cookingCost'),
+    '🛒 Shopping Total': t('shoppingTotal'),
+    '🗑️ Waste Items': t('wasteValue'),
+    'Low stock items': t('lowStockItems'),
+    '≤3 days remaining': t('daysRemaining'),
+    '฿ this week': t('thisWeek'),
+    'entries': lang === 'th' ? 'รายการ' : 'entries',
+    'items': t('items'),
+    'Click to view items': t('clickToView'),
+    '📊 Key Metrics (Last 7 days)': t('keyMetrics'),
+    'Spending by Category': t('spendingByCategory'),
+    'Recent Activity': t('recentActivity'),
+    'Expiring Items': t('expiringItems'),
+    'Resupply Needed': t('resupplyNeeded'),
+    'Waste by Category': t('wasteByCategory')
+  };
+  
+  // Apply KPI translations
+  document.querySelectorAll('.kpi-label, .kpi-trend, h3').forEach(el => {
+    const text = el.textContent.trim();
+    if (kpiTranslations[text]) {
+      el.textContent = kpiTranslations[text];
+    }
+  });
+  
+  // Update title attributes
+  document.querySelectorAll('[title]').forEach(el => {
+    const title = el.getAttribute('title');
+    if (kpiTranslations[title]) {
+      el.setAttribute('title', kpiTranslations[title]);
+    }
   });
 }
