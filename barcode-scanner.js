@@ -273,6 +273,9 @@ async function handleBarcodeDetected(barcode) {
   if (!product) {
     const savedProducts = JSON.parse(localStorage.getItem('scannedProducts') || '{}');
     product = savedProducts[barcode];
+    if (product) {
+      console.log('Product found in localStorage cache:', product);
+    }
   }
   
   // 3. If not found locally, try Open Food Facts API
@@ -288,10 +291,13 @@ async function handleBarcodeDetected(barcode) {
     if (product.category) {
       document.getElementById('qaCategory').value = product.category;
     }
+    if (product.unit) {
+      document.getElementById('qaUnit').value = product.unit;
+    }
     showToast(`✓ พบสินค้า: ${product.name}`, 'success');
     
     // Save to localStorage for faster future access
-    saveScannedProduct(barcode, product.name, product.category);
+    saveScannedProduct(barcode, product.name, product.category, product.unit);
   } else {
     // Product not found anywhere
     console.log('Product not found in any database');
@@ -310,11 +316,11 @@ async function handleBarcodeDetected(barcode) {
 }
 
 // Save scanned product to localStorage
-function saveScannedProduct(barcode, name, category = null) {
+function saveScannedProduct(barcode, name, category = null, unit = null) {
   const savedProducts = JSON.parse(localStorage.getItem('scannedProducts') || '{}');
-  savedProducts[barcode] = { name, category };
+  savedProducts[barcode] = { name, category, unit };
   localStorage.setItem('scannedProducts', JSON.stringify(savedProducts));
-  console.log('Saved product to localStorage:', barcode, name);
+  console.log('Saved product to localStorage:', barcode, name, category, unit);
 }
 
 // Fetch product information from Open Food Facts API
@@ -329,32 +335,82 @@ async function fetchProductFromOpenFoodFacts(barcode) {
     }
     
     const data = await response.json();
-    console.log('Open Food Facts response:', data);
+    console.log('Open Food Facts full response:', data);
     
     if (data.status === 1 && data.product) {
       const product = data.product;
       
-      // Get product name (prefer Thai, fallback to English, then generic)
+      // Get product name (try multiple fields)
       let name = product.product_name_th || 
                  product.product_name_en || 
                  product.product_name || 
+                 product.generic_name_th ||
                  product.generic_name ||
-                 `สินค้า ${barcode}`;
+                 product.brands || 
+                 null;
+      
+      // If still no name, return null to indicate product not found
+      if (!name) {
+        console.log('Product found but no name available');
+        return null;
+      }
+      
+      // Clean up the name
+      name = name.trim();
       
       // Try to map Open Food Facts categories to our categories
       const category = mapOpenFoodFactsCategory(product);
       
-      console.log('Product found on Open Food Facts:', { name, category });
+      // Try to get unit information
+      const unit = detectUnit(product);
       
-      return { name, category };
+      console.log('Product extracted from Open Food Facts:', { 
+        name, 
+        category, 
+        unit,
+        raw_product: product 
+      });
+      
+      return { name, category, unit };
     } else {
-      console.log('Product not found in Open Food Facts database');
+      console.log('Product not found in Open Food Facts database (status: ' + data.status + ')');
       return null;
     }
   } catch (error) {
     console.error('Error fetching from Open Food Facts:', error);
     return null;
   }
+}
+
+// Detect appropriate unit from product data
+function detectUnit(product) {
+  const quantity = product.quantity || '';
+  const packagingTags = (product.packaging_tags || []).join(' ').toLowerCase();
+  const categories = (product.categories_tags || []).join(' ').toLowerCase();
+  
+  // Try to extract from quantity string
+  if (quantity) {
+    const q = quantity.toLowerCase();
+    if (q.includes('kg')) return 'kg';
+    if (q.includes('g') && !q.includes('kg')) return 'g';
+    if (q.includes('l') && !q.includes('ml')) return 'L';
+    if (q.includes('ml')) return 'ml';
+  }
+  
+  // Check packaging
+  if (packagingTags.includes('bottle')) return 'bottle';
+  if (packagingTags.includes('can')) return 'can';
+  if (packagingTags.includes('box')) return 'box';
+  if (packagingTags.includes('pack')) return 'pack';
+  if (packagingTags.includes('bag')) return 'bag';
+  
+  // Guess based on category
+  if (categories.includes('beverage') || categories.includes('drink')) return 'bottle';
+  if (categories.includes('canned')) return 'can';
+  if (categories.includes('fresh') || categories.includes('produce')) return 'kg';
+  
+  // Default to pcs (pieces)
+  return 'pcs';
 }
 
 // Map Open Food Facts categories to our app categories
