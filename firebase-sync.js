@@ -234,10 +234,11 @@ class FirebaseHouseholdSync {
     });
     
     // Mark weeklog as initialized after first data load
-    this.householdRef.child('data/weeklog').once('value', () => {
+    this.householdRef.child('data/weeklog').once('value', async () => {
       weeklogInitialized = true;
-      console.log('✅ Weeklog initial load complete');
-      renderDashboard();
+      console.log('✅ Weeklog initial load complete, rendering...');
+      await renderDashboard();
+      console.log('✅ Dashboard rendered after weeklog init');
     });
     
     // Listen to pantry changes
@@ -262,10 +263,11 @@ class FirebaseHouseholdSync {
     });
     
     // Mark pantry as initialized after first data load
-    this.householdRef.child('data/pantry').once('value', () => {
+    this.householdRef.child('data/pantry').once('value', async () => {
       pantryInitialized = true;
-      console.log('✅ Pantry initial load complete');
-      renderDashboard();
+      console.log('✅ Pantry initial load complete, rendering...');
+      await renderDashboard();
+      console.log('✅ Dashboard rendered after pantry init');
     });
     
     // Listen to device changes
@@ -369,7 +371,8 @@ class FirebaseHouseholdSync {
       }
       
       console.log('✅ Data merged successfully, rendering dashboard...');
-      renderDashboard();
+      await renderDashboard();
+      console.log('✅ Dashboard rendered after merge');
     } catch (err) {
       console.error('❌ Failed to merge data:', err);
     }
