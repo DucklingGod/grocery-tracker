@@ -69,6 +69,8 @@ input,select{width:100%;border-radius:10px;border:1px solid #334155;background:#
 input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 input::placeholder{color:#6b7280}
 input:disabled,select:disabled{opacity:.5;cursor:not-allowed}
+input[type="date"]{font-family:inherit;-webkit-appearance:none;-moz-appearance:none;appearance:none;min-height:auto}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:0.7;cursor:pointer}
 .form-row.hidden{display:none}
 
 /* Buttons */
@@ -185,6 +187,7 @@ tr:hover td{background:#0f172a}
   .form-row.triple>div{min-width:100%}
   label{font-size:12px;margin-bottom:4px}
   input,select{padding:10px 12px;font-size:14px}
+  input[type="date"]{padding:10px 12px;font-size:14px;height:auto;line-height:normal}
   
   /* Buttons - Full width on mobile for better tap targets */
   .form-actions{flex-direction:column}
