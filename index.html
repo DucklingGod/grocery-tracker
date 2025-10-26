@@ -22,6 +22,7 @@
     <button data-view="weeklog" class="nav-btn">📋 Week Log</button>
     <button data-view="pantry" class="nav-btn">🥫 Pantry</button>
     <button data-view="waste" class="nav-btn">🗑 Waste Log</button>
+    <button data-view="ai" class="nav-btn">🤖 AI Assistant</button>
     <button data-view="settings" class="nav-btn">⚙️ Settings</button>
   </nav>
 </header>
@@ -272,6 +273,80 @@
     </div>
   </section>
 
+  <!-- AI ASSISTANT -->
+  <section id="view-ai" class="view">
+    <div class="card">
+      <h3>🤖 AI Assistant</h3>
+      <p style="color:#6b7280;font-size:13px;margin-bottom:16px">
+        Ask me for recipe ideas, shopping lists, or advice based on your pantry inventory!
+      </p>
+      
+      <!-- API Key Setup -->
+      <div id="aiSetup" style="display:block">
+        <div style="background:#1f2937;padding:16px;border-radius:8px;margin-bottom:16px">
+          <h4 style="color:#9ca3af;font-size:14px;margin-bottom:8px">🔑 Setup Required</h4>
+          <p style="color:#6b7280;font-size:13px;margin-bottom:12px">
+            Get a free API key from <a href="https://console.groq.com/keys" target="_blank" style="color:#3b82f6">Groq Console</a> (no credit card required)
+          </p>
+          <div class="form-row">
+            <input type="password" id="groqApiKeyInput" placeholder="Enter your Groq API key..." style="flex:1"/>
+            <button onclick="saveGroqApiKey()" class="primary">💾 Save Key</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Chat Interface -->
+      <div id="aiChatInterface" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="color:#9ca3af;font-size:13px">💬 Chat with AI</div>
+          <button onclick="clearAIChat()" class="secondary" style="padding:6px 12px;font-size:12px">🗑 Clear</button>
+        </div>
+        
+        <div id="aiChatBox" style="
+          height:400px;
+          overflow-y:auto;
+          background:#1f2937;
+          border-radius:8px;
+          padding:16px;
+          margin-bottom:12px;
+          display:flex;
+          flex-direction:column;
+        "></div>
+        
+        <div style="display:flex;gap:8px">
+          <input 
+            type="text" 
+            id="aiInput" 
+            placeholder="Ask for recipes, shopping lists, or advice..." 
+            style="flex:1"
+            onkeypress="if(event.key==='Enter') sendAIMessage()"
+          />
+          <button id="aiSendBtn" onclick="sendAIMessage()" class="primary">📤 Send</button>
+        </div>
+        
+        <!-- Quick Prompts -->
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+          <button onclick="document.getElementById('aiInput').value='What can I cook with my current pantry?';sendAIMessage()" 
+            class="secondary" style="padding:6px 12px;font-size:12px">
+            👨‍🍳 Recipe Ideas
+          </button>
+          <button onclick="document.getElementById('aiInput').value='Create a shopping list for this week';sendAIMessage()" 
+            class="secondary" style="padding:6px 12px;font-size:12px">
+            🛒 Shopping List
+          </button>
+          <button onclick="document.getElementById('aiInput').value='What items are expiring soon?';sendAIMessage()" 
+            class="secondary" style="padding:6px 12px;font-size:12px">
+            ⏰ Expiring Items
+          </button>
+          <button onclick="document.getElementById('aiInput').value='Analyze my food waste';sendAIMessage()" 
+            class="secondary" style="padding:6px 12px;font-size:12px">
+            📊 Waste Analysis
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- SETTINGS -->
   <section id="view-settings" class="view">
     <div class="card">
@@ -371,6 +446,7 @@
 
 <script src="charts.js"></script>
 <script src="firebase-sync.js"></script>
+<script src="ai-assistant.js"></script>
 <script src="app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'grocery-cache-v14';
+const CACHE_NAME = 'grocery-cache-v15';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './app.js',
   './charts.js',
   './firebase-sync.js',
+  './ai-assistant.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
