@@ -8,8 +8,9 @@ const productDatabase = {
   // Thai products - common grocery items
   '8850123456789': { name: 'นมสด', category: 'Dairy & Eggs' },
   '8851234567890': { name: 'ข้าวหอมมะลิ', category: 'Grains & Bread' },
-  '8859114905525': { name: 'ธัญพืช (Diamond Grains Brand)', category: 'Grains & Bread' },
-  // Add more as needed
+  '8859114905525': { name: 'ธัญพืชไดมอนด์เกรนส์ (Diamond Grains)', category: 'Grains & Bread' },
+  // You can add more products as you scan them
+  // Format: 'barcode': { name: 'Product Name', category: 'Category' }
 };
 
 // Open barcode scanner modal
@@ -219,12 +220,29 @@ function initQuaggaScanner(video) {
     Quagga.onDetected((result) => {
       if (scanning && result && result.codeResult && result.codeResult.code) {
         const barcode = result.codeResult.code;
-        console.log('Quagga detected barcode:', barcode);
+        const format = result.codeResult.format;
         
-        // Stop Quagga
-        Quagga.stop();
+        console.log('Quagga detected:', {
+          barcode: barcode,
+          format: format,
+          confidence: result.codeResult.decodedCodes
+        });
         
-        handleBarcodeDetected(barcode);
+        // Validate barcode (must be at least 8 digits for EAN/UPC)
+        if (barcode.length >= 8) {
+          // Stop Quagga
+          Quagga.stop();
+          handleBarcodeDetected(barcode);
+        } else {
+          console.log('Barcode too short, continuing scan...');
+        }
+      }
+    });
+    
+    // Also log when barcode is being processed
+    Quagga.onProcessed((result) => {
+      if (result && result.codeResult) {
+        console.log('Processing barcode attempt:', result.codeResult.code);
       }
     });
   });
@@ -232,30 +250,59 @@ function initQuaggaScanner(video) {
 
 // Handle detected barcode
 function handleBarcodeDetected(barcode) {
+  if (!barcode || barcode.length < 8) {
+    console.log('Barcode too short, ignoring:', barcode);
+    return; // Ignore partial/invalid barcodes
+  }
+  
   scanning = false;
   
+  console.log('Valid barcode detected:', barcode);
+  
   const resultDiv = document.getElementById('barcodeResult');
-  resultDiv.textContent = `✓ Barcode detected: ${barcode}`;
+  resultDiv.textContent = `✓ Barcode: ${barcode}`;
   resultDiv.classList.add('show');
   
   // Look up product in database
-  const product = productDatabase[barcode];
+  let product = productDatabase[barcode];
+  
+  // If not in database, check localStorage for previously scanned items
+  if (!product) {
+    const savedProducts = JSON.parse(localStorage.getItem('scannedProducts') || '{}');
+    product = savedProducts[barcode];
+  }
   
   if (product) {
     // Auto-fill form with product info
+    console.log('Product found:', product);
     document.getElementById('qaItem').value = product.name;
-    document.getElementById('qaCategory').value = product.category;
-    showToast(`✓ Product found: ${product.name}`, 'success');
+    if (product.category) {
+      document.getElementById('qaCategory').value = product.category;
+    }
+    showToast(`✓ พบสินค้า: ${product.name}`, 'success');
   } else {
-    // Just fill in the barcode as item name
-    document.getElementById('qaItem').value = `Product ${barcode.slice(-6)}`;
-    showToast(`✓ Barcode scanned. Please enter product details.`, 'info');
+    // Just fill in a generic name with barcode
+    console.log('Product not in database, using generic name');
+    const itemName = `สินค้า ${barcode}`;
+    document.getElementById('qaItem').value = itemName;
+    showToast(`✓ สแกนบาร์โค้ด: ${barcode}. กรุณากรอกชื่อสินค้า`, 'info');
+    
+    // Save to localStorage for future use
+    saveScannedProduct(barcode, itemName);
   }
   
   // Close scanner after 1.5 seconds
   setTimeout(() => {
     closeBarcodeScanner();
   }, 1500);
+}
+
+// Save scanned product to localStorage
+function saveScannedProduct(barcode, name, category = null) {
+  const savedProducts = JSON.parse(localStorage.getItem('scannedProducts') || '{}');
+  savedProducts[barcode] = { name, category };
+  localStorage.setItem('scannedProducts', JSON.stringify(savedProducts));
+  console.log('Saved product to localStorage:', barcode, name);
 }
 
 // Initialize barcode scanner button
