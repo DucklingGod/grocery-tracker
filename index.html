@@ -177,7 +177,10 @@
           </div>
           <div>
             <label class="required">Item Name</label>
-            <input id="qaItem" placeholder="e.g., หมูสับ" list="itemSuggestions" required autocomplete="off"/>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="qaItem" placeholder="e.g., หมูสับ" list="itemSuggestions" required autocomplete="off" style="flex:1"/>
+              <button type="button" id="btnScanBarcode" class="secondary small" title="Scan Barcode">📷</button>
+            </div>
             <datalist id="itemSuggestions"></datalist>
           </div>
           <div>
@@ -439,6 +442,21 @@
   </section>
 </main>
 
+<!-- Barcode Scanner Modal -->
+<div id="barcodeModal" class="modal" style="display:none">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 data-i18n="scanBarcode">📷 Scan Barcode</h3>
+      <button id="closeBarcodeModal" class="close-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <video id="barcodeVideo" autoplay playsinline></video>
+      <div id="barcodeResult" class="barcode-result"></div>
+      <p class="hint" style="margin-top:12px" data-i18n="pointCamera">📱 Point camera at barcode</p>
+    </div>
+  </div>
+</div>
+
 <footer class="foot">© 2025 Grocery Tracker • Offline-first PWA</footer>
 
 <!-- Firebase SDK -->
@@ -466,6 +484,7 @@
 <script src="charts.js"></script>
 <script src="firebase-sync.js"></script>
 <script src="ai-assistant.js"></script>
+<script src="barcode-scanner.js"></script>
 <script src="app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {

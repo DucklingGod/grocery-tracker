@@ -147,6 +147,15 @@ Just type your question or use the quick prompts below! 🍳`,
     reduceWaste: "Reduce Waste",
     expiringTips: "Expiring Tips",
     
+    // Barcode Scanner
+    scanBarcode: "Scan Barcode",
+    pointCamera: "📱 Point camera at barcode",
+    barcodeDetected: "✓ Barcode detected",
+    productFound: "✓ Product found",
+    cameraAccessDenied: "❌ Camera access denied. Please allow camera permissions.",
+    cameraNotSupported: "❌ Camera not supported on this device",
+    barcodeScanned: "✓ Barcode scanned. Please enter product details.",
+    
     // Settings
     settingsTitle: "Settings",
     languageSection: "Language / ภาษา",
@@ -323,6 +332,15 @@ Just type your question or use the quick prompts below! 🍳`,
     mealPlan: "แผนมื้ออาหาร",
     reduceWaste: "ลดของเสีย",
     expiringTips: "ของใกล้หมดอายุ",
+    
+    // Barcode Scanner
+    scanBarcode: "สแกนบาร์โค้ด",
+    pointCamera: "📱 ชี้กล้องไปที่บาร์โค้ด",
+    barcodeDetected: "✓ ตรวจพบบาร์โค้ด",
+    productFound: "✓ พบสินค้า",
+    cameraAccessDenied: "❌ ไม่อนุญาตให้เข้าถึงกล้อง กรุณาอนุญาตการเข้าถึงกล้อง",
+    cameraNotSupported: "❌ อุปกรณ์นี้ไม่รองรับกล้อง",
+    barcodeScanned: "✓ สแกนบาร์โค้ดแล้ว กรุณากรอกรายละเอียดสินค้า",
     
     // Settings
     settingsTitle: "ตั้งค่า",
