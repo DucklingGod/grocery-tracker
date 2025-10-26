@@ -188,7 +188,7 @@ tr:hover td{background:#0f172a}
   .form-row{flex-direction:column;gap:12px;margin:12px 0}
   .form-field{min-width:100%}
   .form-row.triple>div{min-width:100%}
-  label{font-size:12px;margin-bottom:-100px}
+  label{font-size:12px;margin-bottom:4px}
   input,select{padding:10px 12px;font-size:14px}
   input[type="date"]{padding:10px 12px;font-size:14px;height:auto;line-height:normal}
   
