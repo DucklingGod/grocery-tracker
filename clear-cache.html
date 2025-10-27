@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cache - Grocery Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #log {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success {
+            color: #22c55e;
+        }
+        .error {
+            color: #ef4444;
+        }
+        .info {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Clear All Cache & Service Workers</h1>
+        <p>Use this page to completely reset the app and clear all cached data.</p>
+        
+        <button id="clearBtn" onclick="clearEverything()">Clear Everything</button>
+        <button onclick="location.href='index.html'">← Back to App</button>
+        
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const clearBtn = document.getElementById('clearBtn');
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.className = type;
+            line.textContent = `[${timestamp}] ${message}`;
+            log.appendChild(line);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function clearEverything() {
+            clearBtn.disabled = true;
+            log.innerHTML = '';
+            
+            addLog('🚀 Starting cleanup process...', 'info');
+            
+            try {
+                // 1. Unregister all service workers
+                if ('serviceWorker' in navigator) {
+                    addLog('📋 Getting all service worker registrations...', 'info');
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    addLog(`Found ${registrations.length} service worker(s)`, 'info');
+                    
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                        addLog(`✓ Unregistered service worker from ${registration.scope}`, 'success');
+                    }
+                } else {
+                    addLog('⚠ Service workers not supported', 'error');
+                }
+
+                // 2. Clear all caches
+                if ('caches' in window) {
+                    addLog('📋 Getting all cache names...', 'info');
+                    const cacheNames = await caches.keys();
+                    addLog(`Found ${cacheNames.length} cache(s)`, 'info');
+                    
+                    for (const cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                        addLog(`✓ Deleted cache: ${cacheName}`, 'success');
+                    }
+                } else {
+                    addLog('⚠ Cache API not supported', 'error');
+                }
+
+                // 3. Clear localStorage
+                addLog('📋 Clearing localStorage...', 'info');
+                const localStorageKeys = Object.keys(localStorage);
+                addLog(`Found ${localStorageKeys.length} localStorage item(s)`, 'info');
+                localStorage.clear();
+                addLog('✓ Cleared localStorage', 'success');
+
+                // 4. Clear sessionStorage
+                addLog('📋 Clearing sessionStorage...', 'info');
+                sessionStorage.clear();
+                addLog('✓ Cleared sessionStorage', 'success');
+
+                // 5. Clear IndexedDB (optional, commented out to preserve user data)
+                // addLog('📋 Clearing IndexedDB...', 'info');
+                // const databases = await indexedDB.databases();
+                // for (const db of databases) {
+                //     indexedDB.deleteDatabase(db.name);
+                //     addLog(`✓ Deleted database: ${db.name}`, 'success');
+                // }
+
+                addLog('', 'info');
+                addLog('✅ CLEANUP COMPLETE!', 'success');
+                addLog('🔄 Reloading in 3 seconds...', 'info');
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 3000);
+                
+            } catch (error) {
+                addLog(`❌ Error: ${error.message}`, 'error');
+                clearBtn.disabled = false;
+            }
+        }
+
+        // Auto-run on load if ?auto=1 is in URL
+        if (new URLSearchParams(window.location.search).get('auto') === '1') {
+            setTimeout(clearEverything, 500);
+        }
+    </script>
+</body>
+</html>
