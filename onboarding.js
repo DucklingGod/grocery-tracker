@@ -211,6 +211,8 @@ class OnboardingTutorial {
     ];
     this.overlay = null;
     this.tooltip = null;
+    this.currentTarget = null;
+    this.scrollHandler = null;
   }
 
   start() {
@@ -258,10 +260,36 @@ class OnboardingTutorial {
       
       if (!target) {
         console.warn('Onboarding target not found:', step.target);
-        this.nextStep();
+        // Don't skip, try again with longer delay
+        setTimeout(() => {
+          const retryTarget = document.querySelector(step.target);
+          if (!retryTarget) {
+            console.error('Target still not found, skipping:', step.target);
+            this.nextStep();
+            return;
+          }
+          this.continueShowStep(retryTarget, step);
+        }, 500);
         return;
       }
 
+      this.continueShowStep(target, step);
+    }, step.beforeShow ? 400 : 100);
+  }
+
+  continueShowStep(target, step) {
+    // Store current target for repositioning
+    this.currentTarget = target;
+    
+    // Scroll target into view smoothly
+    target.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'center'
+    });
+
+    // Wait for scroll to complete
+    setTimeout(() => {
       // Highlight the target element
       this.highlightElement(target, step.highlightNav);
 
@@ -269,10 +297,39 @@ class OnboardingTutorial {
       this.positionTooltip(target, step);
       this.updateTooltipContent(step);
 
+      // Ensure overlay and tooltip are visible
+      if (!this.overlay || !this.tooltip) {
+        console.error('Overlay or tooltip missing, recreating...');
+        this.createOverlay();
+      }
+
       // Show overlay and tooltip
       this.overlay.classList.add('active');
       this.tooltip.classList.add('active');
-    }, step.beforeShow ? 300 : 0);
+
+      // Force reflow to ensure visibility
+      void this.tooltip.offsetWidth;
+      
+      // Setup scroll listener to reposition tooltip
+      this.setupScrollListener(target, step);
+    }, 300);
+  }
+
+  setupScrollListener(target, step) {
+    // Remove previous scroll listener if any
+    if (this.scrollHandler) {
+      window.removeEventListener('scroll', this.scrollHandler, true);
+    }
+
+    // Create new scroll handler
+    this.scrollHandler = () => {
+      if (this.tooltip && this.tooltip.classList.contains('active')) {
+        this.positionTooltip(target, step);
+      }
+    };
+
+    // Add scroll listener (with capture to catch all scroll events)
+    window.addEventListener('scroll', this.scrollHandler, true);
   }
 
   highlightElement(element, highlightNav) {
@@ -384,18 +441,31 @@ class OnboardingTutorial {
   finish() {
     localStorage.setItem('onboardingCompleted', 'true');
     
+    // Remove scroll listener
+    if (this.scrollHandler) {
+      window.removeEventListener('scroll', this.scrollHandler, true);
+      this.scrollHandler = null;
+    }
+    
     // Remove highlights
     document.querySelectorAll('.onboarding-highlight').forEach(el => {
       el.classList.remove('onboarding-highlight');
     });
 
     // Fade out and remove
-    this.overlay.classList.remove('active');
-    this.tooltip.classList.remove('active');
+    if (this.overlay) this.overlay.classList.remove('active');
+    if (this.tooltip) this.tooltip.classList.remove('active');
 
     setTimeout(() => {
-      if (this.overlay) this.overlay.remove();
-      if (this.tooltip) this.tooltip.remove();
+      if (this.overlay) {
+        this.overlay.remove();
+        this.overlay = null;
+      }
+      if (this.tooltip) {
+        this.tooltip.remove();
+        this.tooltip = null;
+      }
+      this.currentTarget = null;
     }, 300);
 
     // Show success message
