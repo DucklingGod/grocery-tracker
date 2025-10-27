@@ -32,6 +32,79 @@ function showToast(message, type='info'){
   }, 3000);
 }
 
+// --- Success Animations ---
+function showSuccessAnimation(element) {
+  if (!element) return;
+  
+  // Add success animation class
+  element.classList.add('success-animation');
+  
+  // Remove after animation completes
+  setTimeout(() => {
+    element.classList.remove('success-animation');
+  }, 400);
+}
+
+function showSuccessCheckmark() {
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'success-overlay';
+  
+  // Create checkmark
+  const checkmark = document.createElement('div');
+  checkmark.className = 'success-checkmark';
+  checkmark.innerHTML = `
+    <svg viewBox="0 0 52 52">
+      <path d="M14 27l7 7 17-17"/>
+    </svg>
+  `;
+  
+  overlay.appendChild(checkmark);
+  document.body.appendChild(overlay);
+  
+  // Remove after animation
+  setTimeout(() => {
+    overlay.style.animation = 'fadeIn 0.2s ease-out reverse';
+    setTimeout(() => overlay.remove(), 200);
+  }, 800);
+}
+
+function addRippleEffect(button) {
+  if (!button) return;
+  button.classList.add('btn-ripple');
+}
+
+function addSuccessStateToInput(input) {
+  if (!input) return;
+  
+  input.classList.add('input-success');
+  
+  setTimeout(() => {
+    input.classList.remove('input-success');
+  }, 600);
+}
+
+function animateFormSuccess(form) {
+  if (!form) return;
+  
+  // Animate all inputs
+  const inputs = form.querySelectorAll('input, select, textarea');
+  inputs.forEach((input, index) => {
+    setTimeout(() => {
+      addSuccessStateToInput(input);
+    }, index * 50);
+  });
+  
+  // Show checkmark
+  showSuccessCheckmark();
+  
+  // Pulse the form
+  form.classList.add('success-animation');
+  setTimeout(() => {
+    form.classList.remove('success-animation');
+  }, 400);
+}
+
 // --- Keyboard Shortcuts ---
 document.addEventListener('keydown', (e)=>{
   // Alt + 1-6 for quick navigation
@@ -330,6 +403,9 @@ $('#quickForm').addEventListener('submit', async (e)=>{
     notifyHouseholdUpdate('update-pantry', p);
   }
 
+  // Show success animations
+  animateFormSuccess(e.target);
+  
   e.target.reset();
   $('#qaPurchase').value = new Date().toISOString().slice(0,10);
   $('#qaAction').value = '';
@@ -340,7 +416,7 @@ $('#quickForm').addEventListener('submit', async (e)=>{
   learnBarcodeFromFormSubmission(row.item, row.category, row.unit);
   
   renderDashboard(); renderWeekLog(); renderPantry(); renderWaste();
-  showToast('✓ Entry saved successfully!', 'success');
+  showToast('✓ บันทึกสำเร็จ!', 'success');
 });
 $('#btnClear').addEventListener('click', ()=> { 
   $('#quickForm').reset(); 
@@ -1107,3 +1183,20 @@ if ('serviceWorker' in navigator) {
     console.error('Service Worker registration failed:', err);
   });
 }
+
+// --- Initialize Success Animations ---
+document.addEventListener('DOMContentLoaded', () => {
+  // Add ripple effect to all buttons
+  const buttons = document.querySelectorAll('button, .btn, .nav-btn, .kpi-clickable');
+  buttons.forEach(button => {
+    addRippleEffect(button);
+  });
+  
+  // Add success animation to submit buttons
+  const submitButtons = document.querySelectorAll('button[type="submit"]');
+  submitButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      showSuccessAnimation(button);
+    });
+  });
+});
