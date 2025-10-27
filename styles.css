@@ -145,7 +145,7 @@ button.small+button.small{margin-left:4px}
 /* Tables */
 .table-controls{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
 .table-controls input{flex:1;min-width:200px;max-width:400px}
-.table{overflow:auto;border:1px solid #1f2937;border-radius:12px;max-height:600px}
+.table{overflow:auto;border:1px solid #1f2937;border-radius:12px;max-height:calc(100vh - 350px);min-height:400px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:12px 16px;border-bottom:1px solid #1f2937;text-align:left}
 th{position:sticky;top:0;background:#0f172a;font-weight:600;color:#9ca3af;text-transform:uppercase;font-size:11px;letter-spacing:.5px;z-index:10;cursor:pointer;user-select:none}
@@ -258,15 +258,18 @@ tr:hover td{background:#0f172a}
   .form-actions{flex-direction:column}
   .form-actions button{width:100%}
   button{padding:12px 16px;font-size:14px}
-  button.small{padding:8px 12px;font-size:12px}
+  button.small{padding:10px 14px;font-size:13px;min-width:60px}
   
-  /* Tables - Horizontal scroll, compact */
+  /* Tables - Horizontal scroll, expanded height on mobile */
   .table-controls{flex-direction:column}
   .table-controls input{max-width:100%}
-  .table{border-radius:8px;max-height:400px}
+  .table{border-radius:8px;max-height:calc(100vh - 280px);min-height:500px}
   table{font-size:12px;min-width:600px}
   th,td{padding:8px 10px;font-size:12px}
   th{font-size:10px}
+  
+  /* Action buttons in tables - Better spacing */
+  td button.small{margin:2px;padding:8px 12px;min-width:55px}
   
   /* Badges - Smaller */
   .badge{padding:3px 8px;font-size:10px}
