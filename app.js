@@ -1560,27 +1560,30 @@ class ContextMenu {
     // Long-press listener for mobile
     let touchStartX, touchStartY;
     let isLongPress = false;
+    let hasMoved = false;
     
     row.addEventListener('touchstart', (e) => {
-      // Prevent iOS text selection callout
-      e.preventDefault();
-      
+      // Don't prevent default - allow scrolling
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
       isLongPress = false;
+      hasMoved = false;
       
       this.longPressTimer = setTimeout(() => {
-        isLongPress = true;
-        row.classList.add('long-press-active');
-        const actions = getActions(row);
-        this.show(touchStartX, touchStartY, actions);
-        
-        // Haptic feedback if available
-        if (navigator.vibrate) {
-          navigator.vibrate(50);
+        // Only trigger long press if user hasn't moved finger
+        if (!hasMoved) {
+          isLongPress = true;
+          row.classList.add('long-press-active');
+          const actions = getActions(row);
+          this.show(touchStartX, touchStartY, actions);
+          
+          // Haptic feedback if available
+          if (navigator.vibrate) {
+            navigator.vibrate(50);
+          }
         }
       }, this.longPressDelay);
-    }, { passive: false });
+    });
 
     row.addEventListener('touchmove', (e) => {
       // Cancel long press if finger moves too much
@@ -1589,6 +1592,7 @@ class ContextMenu {
       const deltaY = Math.abs(touch.clientY - touchStartY);
       
       if (deltaX > 10 || deltaY > 10) {
+        hasMoved = true;
         clearTimeout(this.longPressTimer);
         row.classList.remove('long-press-active');
         isLongPress = false;
@@ -1606,12 +1610,14 @@ class ContextMenu {
       }
       
       isLongPress = false;
-    }, { passive: false });
+      hasMoved = false;
+    });
 
     row.addEventListener('touchcancel', () => {
       clearTimeout(this.longPressTimer);
       row.classList.remove('long-press-active');
       isLongPress = false;
+      hasMoved = false;
     });
   }
 }

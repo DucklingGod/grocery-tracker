@@ -197,6 +197,7 @@ tbody tr{
   -ms-user-select:none;
   -webkit-touch-callout:none;
   cursor:pointer;
+  touch-action:auto;
 }
 tr:hover td{background:#0f172a}
 .empty-state{padding:40px;text-align:center;color:#6b7280}
