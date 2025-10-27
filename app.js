@@ -488,14 +488,19 @@ $('#btnDuplicateLast').addEventListener('click', async ()=>{
 // --- Tables with Search ---
 let currentTableData = { weeklog:[], pantry:[], waste:[] };
 
-function table(el, rows, columns, emptyMsg='No data available'){
+function table(el, rows, columns, emptyMsg='No data available', contextMenuConfig=null){
   if(rows.length===0){
     el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📭</div><div>${emptyMsg}</div></div>`;
     return;
   }
   const html = [`<table><thead><tr>${columns.map(c=>`<th class="sortable">${c.label}</th>`).join('')}</tr></thead><tbody>`];
   rows.forEach(r=>{
-    html.push('<tr>');
+    // Add data attributes for context menu
+    const dataAttrs = contextMenuConfig ? Object.keys(contextMenuConfig.dataKeys || {}).map(key => 
+      `data-${key}="${String(r[contextMenuConfig.dataKeys[key]] || '').replace(/"/g, '&quot;')}"`
+    ).join(' ') : '';
+    
+    html.push(`<tr ${dataAttrs}>`);
     columns.forEach(c=> {
       const value = c.render ? c.render(r[c.key], r) : (r[c.key] ?? '');
       html.push(`<td>${value}</td>`);
@@ -504,6 +509,14 @@ function table(el, rows, columns, emptyMsg='No data available'){
   });
   html.push('</tbody></table>');
   el.innerHTML = html.join('');
+  
+  // Attach context menus if configured
+  if(contextMenuConfig && contextMenuConfig.getActions){
+    const tableRows = el.querySelectorAll('tbody tr');
+    tableRows.forEach(row => {
+      contextMenu.attachToTableRow(row, contextMenuConfig.getActions);
+    });
+  }
 }
 
 // Search functionality
@@ -547,7 +560,29 @@ async function renderWeekLog(filtered=null){
     {key:'expirationDate', label:'Expire', render:v=>fmtDate(v)},
     {key:'threshold', label:'Threshold'},
     {key:'id', label:'Actions', render:(v)=>`<button class="small danger" onclick="deleteLogEntry(${v})">✕ Remove</button>`}
-  ], 'No transactions yet. Start by adding entries in Quick Add!');
+  ], 'No transactions yet. Start by adding entries in Quick Add!', {
+    dataKeys: { id: 'id', item: 'item', action: 'actionType' },
+    getActions: (row) => {
+      const id = row.getAttribute('data-id');
+      const item = row.getAttribute('data-item');
+      const action = row.getAttribute('data-action');
+      
+      return [
+        {
+          icon: '📋',
+          label: 'View Details',
+          action: () => showToast(`${action}: ${item}`, 'info')
+        },
+        { divider: true },
+        {
+          icon: '🗑️',
+          label: 'Delete Entry',
+          danger: true,
+          action: () => deleteLogEntry(parseInt(id))
+        }
+      ];
+    }
+  });
 }
 
 // Delete log entry
@@ -627,7 +662,7 @@ async function renderPantry(filtered=null){
   html += '</tr></thead><tbody>';
   
   pan.forEach(row => {
-    html += '<tr>';
+    html += '<tr data-item="' + (row.item || '').replace(/"/g, '&quot;') + '" data-unit="' + (row.unit || '').replace(/"/g, '&quot;') + '" data-onhand="' + (row.onHand || 0) + '">';
     html += `<td>${row.item || ''}</td>`;
     html += `<td>${row.unit || ''}</td>`;
     html += `<td>${Number(row.onHand || 0).toFixed(2)}</td>`;
@@ -660,6 +695,36 @@ async function renderPantry(filtered=null){
   
   html += '</tbody></table>';
   $('#pantryTable').innerHTML = html;
+  
+  // Attach context menus to table rows
+  const rows = $('#pantryTable').querySelectorAll('tbody tr');
+  rows.forEach(row => {
+    contextMenu.attachToTableRow(row, (targetRow) => {
+      const item = targetRow.getAttribute('data-item');
+      const unit = targetRow.getAttribute('data-unit');
+      const onHand = parseFloat(targetRow.getAttribute('data-onhand'));
+      
+      return [
+        {
+          icon: '⚡',
+          label: 'Quick Use',
+          action: () => quickUseItem(item, unit)
+        },
+        {
+          icon: '📝',
+          label: 'Adjust Quantity',
+          action: () => adjustPantryQty(item, onHand)
+        },
+        { divider: true },
+        {
+          icon: '🗑️',
+          label: 'Remove from Pantry',
+          danger: true,
+          action: () => removePantryItem(item)
+        }
+      ];
+    });
+  });
 }
 
 // Quick use item from pantry
@@ -745,7 +810,29 @@ async function renderWaste(filtered=null){
     {key:'purchaseDate', label:'Purchase', render:v=>fmtDate(v)},
     {key:'expirationDate', label:'Expire', render:v=>fmtDate(v)},
     {key:'id', label:'Actions', render:(v)=>`<button class="small danger" onclick="deleteLogEntry(${v})">✕ Remove</button>`}
-  ], 'No waste entries. Great job managing your groceries!');
+  ], 'No waste entries. Great job managing your groceries!', {
+    dataKeys: { id: 'id', item: 'item', reason: 'wasteReason' },
+    getActions: (row) => {
+      const id = row.getAttribute('data-id');
+      const item = row.getAttribute('data-item');
+      const reason = row.getAttribute('data-reason');
+      
+      return [
+        {
+          icon: '📋',
+          label: 'View Details',
+          action: () => showToast(`Waste: ${item}${reason ? ` (${reason})` : ''}`, 'info')
+        },
+        { divider: true },
+        {
+          icon: '🗑️',
+          label: 'Delete Entry',
+          danger: true,
+          action: () => deleteLogEntry(parseInt(id))
+        }
+      ];
+    }
+  });
 }
 
 async function renderDashboard(){
@@ -1208,3 +1295,160 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+// --- Context Menu System ---
+class ContextMenu {
+  constructor() {
+    this.menu = null;
+    this.backdrop = null;
+    this.currentRow = null;
+    this.longPressTimer = null;
+    this.longPressDelay = 500; // 500ms for long press
+    this.createMenu();
+    this.setupGlobalListeners();
+  }
+
+  createMenu() {
+    // Create backdrop
+    this.backdrop = document.createElement('div');
+    this.backdrop.className = 'context-menu-backdrop';
+    this.backdrop.addEventListener('click', () => this.hide());
+    document.body.appendChild(this.backdrop);
+
+    // Create menu
+    this.menu = document.createElement('div');
+    this.menu.className = 'context-menu';
+    document.body.appendChild(this.menu);
+  }
+
+  setupGlobalListeners() {
+    // Close menu on scroll
+    window.addEventListener('scroll', () => this.hide(), true);
+    
+    // Close menu on window resize
+    window.addEventListener('resize', () => this.hide());
+    
+    // Close menu on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') this.hide();
+    });
+  }
+
+  show(x, y, items) {
+    // Clear existing menu items
+    this.menu.innerHTML = '';
+
+    // Add menu items
+    items.forEach(item => {
+      if (item.divider) {
+        const divider = document.createElement('div');
+        divider.className = 'context-menu-divider';
+        this.menu.appendChild(divider);
+      } else {
+        const menuItem = document.createElement('button');
+        menuItem.className = `context-menu-item${item.danger ? ' danger' : ''}`;
+        menuItem.innerHTML = `
+          <span class="icon">${item.icon}</span>
+          <span>${item.label}</span>
+        `;
+        menuItem.addEventListener('click', () => {
+          item.action();
+          this.hide();
+        });
+        this.menu.appendChild(menuItem);
+      }
+    });
+
+    // Position menu
+    this.menu.style.left = `${x}px`;
+    this.menu.style.top = `${y}px`;
+
+    // Show menu
+    this.backdrop.classList.add('active');
+    setTimeout(() => {
+      this.menu.classList.add('active');
+    }, 10);
+
+    // Adjust position if menu goes off screen
+    setTimeout(() => {
+      const rect = this.menu.getBoundingClientRect();
+      if (rect.right > window.innerWidth) {
+        this.menu.style.left = `${x - rect.width}px`;
+      }
+      if (rect.bottom > window.innerHeight) {
+        this.menu.style.top = `${y - rect.height}px`;
+      }
+    }, 20);
+  }
+
+  hide() {
+    this.menu.classList.remove('active');
+    this.backdrop.classList.remove('active');
+    this.currentRow = null;
+  }
+
+  attachToTableRow(row, getActions) {
+    // Right-click listener
+    row.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const actions = getActions(row);
+      this.show(e.clientX, e.clientY, actions);
+    });
+
+    // Long-press listener for mobile
+    let touchStartX, touchStartY;
+    
+    row.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      
+      this.longPressTimer = setTimeout(() => {
+        row.classList.add('long-press-active');
+        const actions = getActions(row);
+        this.show(touchStartX, touchStartY, actions);
+        
+        // Haptic feedback if available
+        if (navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+      }, this.longPressDelay);
+    });
+
+    row.addEventListener('touchmove', (e) => {
+      // Cancel long press if finger moves too much
+      const touch = e.touches[0];
+      const deltaX = Math.abs(touch.clientX - touchStartX);
+      const deltaY = Math.abs(touch.clientY - touchStartY);
+      
+      if (deltaX > 10 || deltaY > 10) {
+        clearTimeout(this.longPressTimer);
+        row.classList.remove('long-press-active');
+      }
+    });
+
+    row.addEventListener('touchend', () => {
+      clearTimeout(this.longPressTimer);
+      row.classList.remove('long-press-active');
+    });
+
+    row.addEventListener('touchcancel', () => {
+      clearTimeout(this.longPressTimer);
+      row.classList.remove('long-press-active');
+    });
+  }
+}
+
+// Create global context menu instance
+const contextMenu = new ContextMenu();
+
+// Helper function to get row data from table row
+function getRowData(row) {
+  const cells = row.querySelectorAll('td');
+  return {
+    item: cells[0]?.textContent.trim(),
+    unit: cells[1]?.textContent.trim(),
+    onHand: cells[2]?.textContent.trim(),
+    element: row
+  };
+}
+

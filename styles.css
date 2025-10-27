@@ -379,3 +379,90 @@ tr:hover td{background:#0f172a}
   .activity-list{max-height:150px}
   .category-list{max-height:150px}
 }
+
+/* Context Menu - Right-click and Long-press */
+.context-menu{
+  position:fixed;
+  background:#ffffff;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  box-shadow:0 4px 12px rgba(0,0,0,.15),0 0 0 1px rgba(0,0,0,.05);
+  padding:4px 0;
+  min-width:160px;
+  z-index:10000;
+  opacity:0;
+  transform:scale(0.95);
+  transition:opacity .15s ease,transform .15s ease;
+  pointer-events:none;
+}
+
+.context-menu.active{
+  opacity:1;
+  transform:scale(1);
+  pointer-events:auto;
+}
+
+.context-menu-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 16px;
+  font-size:14px;
+  color:#1f2937;
+  cursor:pointer;
+  transition:background .1s ease;
+  border:none;
+  background:none;
+  width:100%;
+  text-align:left;
+}
+
+.context-menu-item:hover{
+  background:#f3f4f6;
+}
+
+.context-menu-item:active{
+  background:#e5e7eb;
+}
+
+.context-menu-item.danger{
+  color:#dc2626;
+}
+
+.context-menu-item.danger:hover{
+  background:#fee;
+}
+
+.context-menu-item .icon{
+  font-size:16px;
+  width:20px;
+  text-align:center;
+}
+
+.context-menu-divider{
+  height:1px;
+  background:#e5e7eb;
+  margin:4px 0;
+}
+
+/* Long-press feedback */
+.long-press-active{
+  background:#f3f4f6!important;
+  transform:scale(0.98);
+  transition:all .15s ease;
+}
+
+/* Context menu backdrop */
+.context-menu-backdrop{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:9999;
+  display:none;
+}
+
+.context-menu-backdrop.active{
+  display:block;
+}
