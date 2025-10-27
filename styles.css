@@ -42,6 +42,44 @@
 .input-success{border-color:#22c55e!important;animation:successGlow .6s ease-out}
 .input-success:focus{border-color:#22c55e!important;box-shadow:0 0 0 3px rgba(34,197,94,.2)!important}
 
+/* Onboarding Tutorial */
+.onboarding-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:9999;opacity:0;transition:opacity .3s ease;pointer-events:none}
+.onboarding-overlay.active{opacity:1;pointer-events:auto}
+
+.onboarding-highlight{position:relative;z-index:10000!important;box-shadow:0 0 0 4px #60a5fa,0 0 0 8px rgba(96,165,250,.3),0 0 32px rgba(96,165,250,.5)!important;border-radius:8px!important;animation:onboardingPulse 2s ease-in-out infinite}
+
+@keyframes onboardingPulse{0%,100%{box-shadow:0 0 0 4px #60a5fa,0 0 0 8px rgba(96,165,250,.3),0 0 32px rgba(96,165,250,.5)}50%{box-shadow:0 0 0 4px #60a5fa,0 0 0 12px rgba(96,165,250,.4),0 0 48px rgba(96,165,250,.6)}}
+
+.onboarding-tooltip{position:fixed;background:#111827;border:2px solid #60a5fa;border-radius:16px;padding:0;max-width:400px;min-width:320px;z-index:10001;opacity:0;transform:scale(.9);transition:all .3s ease;box-shadow:0 12px 48px rgba(0,0,0,.8),0 0 0 1px rgba(96,165,250,.2)}
+.onboarding-tooltip.active{opacity:1;transform:scale(1)}
+
+.onboarding-tooltip-header{padding:20px 24px 16px;border-bottom:1px solid #1f2937;display:flex;justify-content:space-between;align-items:center}
+.onboarding-tooltip-title{font-size:18px;font-weight:700;color:#60a5fa}
+.onboarding-close{background:transparent;border:none;color:#9ca3af;font-size:24px;cursor:pointer;padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .2s ease}
+.onboarding-close:hover{background:#1e293b;color:#fff}
+
+.onboarding-tooltip-content{padding:20px 24px;font-size:15px;line-height:1.6;color:#cbd5e1}
+
+.onboarding-tooltip-footer{padding:16px 24px 20px;border-top:1px solid #1f2937;display:flex;justify-content:space-between;align-items:center}
+.onboarding-progress{font-size:13px;color:#9ca3af;font-weight:600}
+.onboarding-buttons{display:flex;gap:8px}
+.onboarding-btn{padding:10px 20px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s ease;white-space:nowrap}
+.onboarding-btn.primary{background:#60a5fa;color:#fff}
+.onboarding-btn.primary:hover{background:#3b82f6;transform:translateY(-1px);box-shadow:0 4px 12px rgba(96,165,250,.4)}
+.onboarding-btn.secondary{background:#1e293b;color:#cbd5e1;border:1px solid #334155}
+.onboarding-btn.secondary:hover{background:#334155;color:#fff}
+
+/* Mobile adjustments for onboarding */
+@media(max-width:768px){
+  .onboarding-tooltip{max-width:calc(100vw - 32px);min-width:280px;left:16px!important;right:16px!important;width:auto!important}
+  .onboarding-tooltip-header{padding:16px 20px 12px}
+  .onboarding-tooltip-title{font-size:16px}
+  .onboarding-tooltip-content{padding:16px 20px;font-size:14px}
+  .onboarding-tooltip-footer{padding:12px 20px 16px;flex-direction:column;gap:12px;align-items:stretch}
+  .onboarding-buttons{flex-direction:column;width:100%}
+  .onboarding-btn{width:100%;justify-content:center}
+}
+
 /* Reset & Base */
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Noto Sans Thai',ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 body{margin:0;font-family:'Noto Sans Thai',ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#0b1220;color:#e5e7eb;line-height:1.6;-webkit-tap-highlight-color:transparent;touch-action:manipulation}

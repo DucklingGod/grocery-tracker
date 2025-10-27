@@ -422,6 +422,14 @@
       </div>
       
       <div style="margin-bottom:24px">
+        <h4 style="color:#9ca3af;font-size:14px;margin-bottom:12px">📚 Help & Tutorial</h4>
+        <div class="form-row">
+          <button id="btnRestartTutorial" class="secondary" onclick="if(typeof onboarding !== 'undefined') onboarding.restart()">🎓 Restart Tutorial</button>
+        </div>
+        <p style="color:#6b7280;font-size:12px;margin-top:8px">New to Grocery Tracker? Take the interactive tutorial to learn the basics!</p>
+      </div>
+      
+      <div style="margin-bottom:24px">
         <h4 style="color:#9ca3af;font-size:14px;margin-bottom:12px">Data Backup</h4>
         <div class="form-row">
           <button id="btnExport" class="secondary">📥 Export JSON Backup</button>
@@ -485,6 +493,7 @@
 <script src="firebase-sync.js"></script>
 <script src="ai-assistant.js"></script>
 <script src="barcode-scanner.js"></script>
+<script src="onboarding.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
