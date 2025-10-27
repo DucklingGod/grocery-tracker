@@ -54,19 +54,27 @@ function showSuccessCheckmark() {
   const checkmark = document.createElement('div');
   checkmark.className = 'success-checkmark';
   checkmark.innerHTML = `
-    <svg viewBox="0 0 52 52">
-      <path d="M14 27l7 7 17-17"/>
+    <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 27l7 7 17-17" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray: 100; stroke-dashoffset: 100;"/>
     </svg>
   `;
   
   overlay.appendChild(checkmark);
   document.body.appendChild(overlay);
   
+  // Trigger animation after a brief delay
+  setTimeout(() => {
+    const path = checkmark.querySelector('path');
+    if (path) {
+      path.style.animation = 'checkmark 0.5s ease-out 0.2s forwards';
+    }
+  }, 10);
+  
   // Remove after animation
   setTimeout(() => {
     overlay.style.animation = 'fadeIn 0.2s ease-out reverse';
     setTimeout(() => overlay.remove(), 200);
-  }, 800);
+  }, 1000);
 }
 
 function addRippleEffect(button) {
