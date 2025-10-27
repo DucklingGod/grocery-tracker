@@ -1057,46 +1057,51 @@ function learnBarcodeFromFormSubmission(itemName, category, unit) {
 if ('serviceWorker' in navigator) {
   // Unregister all old service workers first
   navigator.serviceWorker.getRegistrations().then(registrations => {
-    registrations.forEach(registration => {
+    const unregisterPromises = registrations.map(registration => {
       console.log('Unregistering old service worker...');
-      registration.unregister();
+      return registration.unregister();
     });
+    return Promise.all(unregisterPromises);
+  }).then(() => {
+    // Wait a bit to ensure cleanup is complete
+    return new Promise(resolve => setTimeout(resolve, 500));
   }).then(() => {
     // Register new service worker
-    navigator.serviceWorker.register('service-worker.js').then(reg => {
-      console.log('Service Worker registered');
-      
-      // Force immediate update check
-      reg.update();
-      
-      // Check for updates every 10 seconds
-      setInterval(() => {
+    return navigator.serviceWorker.register('service-worker.js');
+  }).then(reg => {
+    console.log('Service Worker registered');
+    
+    // Check for updates every 10 seconds (but not immediately)
+    setInterval(() => {
+      if (reg.active) {
         reg.update();
-      }, 10000);
+      }
+    }, 10000);
+    
+    // Listen for new service worker
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      console.log('New Service Worker found!');
       
-      // Listen for new service worker
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        console.log('New Service Worker found!');
-        
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            console.log('New version available! Reloading...');
-            
-            // Show toast notification
-            showToast('🔄 อัพเดทแอปเวอร์ชั่นใหม่...', 'info');
-            
-            // Reload after 2 seconds
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
-          } else if (newWorker.state === 'activated' && !navigator.serviceWorker.controller) {
-            // First time activation
-            console.log('Service Worker activated for the first time');
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          console.log('New version available! Reloading...');
+          
+          // Show toast notification
+          showToast('🔄 อัพเดทแอปเวอร์ชั่นใหม่...', 'info');
+          
+          // Reload after 2 seconds
+          setTimeout(() => {
             window.location.reload();
-          }
-        });
+          }, 2000);
+        } else if (newWorker.state === 'activated' && !navigator.serviceWorker.controller) {
+          // First time activation
+          console.log('Service Worker activated for the first time');
+          window.location.reload();
+        }
       });
     });
+  }).catch(err => {
+    console.error('Service Worker registration failed:', err);
   });
 }
