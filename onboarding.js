@@ -43,7 +43,7 @@ class OnboardingTutorial {
       },
       {
         target: '#topCatChart',
-        title: '� Top Categories',
+        title: '🏆 Top Categories',
         content: 'Your biggest spending categories. Know where your money goes - meat, vegetables, snacks, etc.',
         position: 'top',
         highlightNav: false
@@ -68,7 +68,7 @@ class OnboardingTutorial {
       },
       {
         target: '#qaItem',
-        title: '� Item Name',
+        title: '🛒 Item Name',
         content: 'Enter what you bought (e.g., "Milk", "Chicken"). See the 📷 barcode button? Scan products instantly!',
         position: 'bottom',
         highlightNav: false
@@ -128,7 +128,7 @@ class OnboardingTutorial {
       },
       {
         target: '#searchPantry',
-        title: '� Smart Search',
+        title: '🔍 Smart Search',
         content: 'Find items instantly! Search by name, filter by category. Works on all tables throughout the app.',
         position: 'bottom',
         highlightNav: false
