@@ -32,6 +32,159 @@ function showToast(message, type='info'){
   }, 3000);
 }
 
+// --- Custom Dialog System ---
+function showCustomDialog(options) {
+  return new Promise((resolve) => {
+    const { title, message, type = 'info', buttons = [] } = options;
+    
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-dialog-overlay';
+    
+    // Create dialog
+    const dialog = document.createElement('div');
+    dialog.className = 'custom-dialog';
+    
+    // Icon based on type
+    const icons = {
+      info: '💡',
+      success: '✅',
+      warning: '⚠️',
+      error: '❌',
+      question: '❓'
+    };
+    
+    dialog.innerHTML = `
+      <div class="custom-dialog-icon ${type}">${icons[type] || icons.info}</div>
+      ${title ? `<div class="custom-dialog-title">${title}</div>` : ''}
+      <div class="custom-dialog-message">${message}</div>
+      <div class="custom-dialog-buttons">
+        ${buttons.map((btn, idx) => 
+          `<button class="custom-dialog-btn ${btn.style || 'secondary'}" data-index="${idx}">${btn.text}</button>`
+        ).join('')}
+      </div>
+    `;
+    
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    
+    // Animate in
+    setTimeout(() => {
+      overlay.classList.add('active');
+      dialog.classList.add('active');
+    }, 10);
+    
+    // Handle button clicks
+    const buttonElements = dialog.querySelectorAll('.custom-dialog-btn');
+    buttonElements.forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        // Animate out
+        overlay.classList.remove('active');
+        dialog.classList.remove('active');
+        
+        setTimeout(() => {
+          overlay.remove();
+          resolve(buttons[idx].value);
+        }, 200);
+      });
+    });
+    
+    // Close on overlay click for non-critical dialogs
+    if (type !== 'warning' && type !== 'error') {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+          dialog.classList.remove('active');
+          setTimeout(() => {
+            overlay.remove();
+            resolve(null);
+          }, 200);
+        }
+      });
+    }
+  });
+}
+
+// Custom Alert
+window.customAlert = function(message, title = 'แจ้งเตือน') {
+  return showCustomDialog({
+    title,
+    message,
+    type: 'info',
+    buttons: [
+      { text: 'ตกลง', value: true, style: 'primary' }
+    ]
+  });
+};
+
+// Custom Confirm
+window.customConfirm = function(message, title = 'ยืนยัน') {
+  return showCustomDialog({
+    title,
+    message,
+    type: 'question',
+    buttons: [
+      { text: 'ยกเลิก', value: false, style: 'secondary' },
+      { text: 'ยืนยัน', value: true, style: 'primary' }
+    ]
+  });
+};
+
+// Custom Prompt
+window.customPrompt = function(message, defaultValue = '', title = 'กรอกข้อมูล') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-dialog-overlay';
+    
+    const dialog = document.createElement('div');
+    dialog.className = 'custom-dialog';
+    
+    dialog.innerHTML = `
+      <div class="custom-dialog-icon info">✏️</div>
+      ${title ? `<div class="custom-dialog-title">${title}</div>` : ''}
+      <div class="custom-dialog-message">${message}</div>
+      <input type="text" class="custom-dialog-input" value="${defaultValue}" placeholder="กรอกข้อมูล...">
+      <div class="custom-dialog-buttons">
+        <button class="custom-dialog-btn secondary" data-action="cancel">ยกเลิก</button>
+        <button class="custom-dialog-btn primary" data-action="ok">ตกลง</button>
+      </div>
+    `;
+    
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    
+    const input = dialog.querySelector('.custom-dialog-input');
+    
+    setTimeout(() => {
+      overlay.classList.add('active');
+      dialog.classList.add('active');
+      input.focus();
+      input.select();
+    }, 10);
+    
+    const closeDialog = (value) => {
+      overlay.classList.remove('active');
+      dialog.classList.remove('active');
+      setTimeout(() => {
+        overlay.remove();
+        resolve(value);
+      }, 200);
+    };
+    
+    dialog.querySelector('[data-action="cancel"]').addEventListener('click', () => closeDialog(null));
+    dialog.querySelector('[data-action="ok"]').addEventListener('click', () => closeDialog(input.value));
+    
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') closeDialog(input.value);
+      if (e.key === 'Escape') closeDialog(null);
+    });
+    
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeDialog(null);
+    });
+  });
+};
+
 // --- Success Animations ---
 function showSuccessAnimation(element) {
   if (!element) return;
@@ -587,7 +740,8 @@ async function renderWeekLog(filtered=null){
 
 // Delete log entry
 window.deleteLogEntry = async function(id){
-  if(!confirm('Are you sure you want to delete this entry?')) return;
+  const confirmed = await customConfirm('คุณแน่ใจหรือไม่ที่จะลบรายการนี้?', '⚠️ ยืนยันการลบ');
+  if(!confirmed) return;
   
   try {
     // Get the entry first to reverse pantry changes
@@ -750,13 +904,13 @@ window.quickUseItem = function(itemName, unit){
 
 // Adjust pantry quantity
 window.adjustPantryQty = async function(itemName, currentQty){
-  const newQty = prompt(`Adjust quantity for "${itemName}"\nCurrent: ${currentQty}`, currentQty);
+  const newQty = await customPrompt(`ปรับจำนวนสำหรับ "${itemName}"`, currentQty, '📝 ปรับจำนวน');
   
   if(newQty === null) return; // User cancelled
   
   const qty = parseFloat(newQty);
   if(isNaN(qty) || qty < 0){
-    showToast('❌ Invalid quantity', 'error');
+    await customAlert('❌ กรุณากรอกจำนวนที่ถูกต้อง', 'ข้อมูลไม่ถูกต้อง');
     return;
   }
   
@@ -778,7 +932,11 @@ window.adjustPantryQty = async function(itemName, currentQty){
 
 // Remove item from pantry
 window.removePantryItem = async function(itemName){
-  if(!confirm(`Are you sure you want to remove "${itemName}" from your pantry?\n\nThis will not delete transaction history.`)) return;
+  const confirmed = await customConfirm(
+    `คุณแน่ใจหรือไม่ที่จะลบ "${itemName}" ออกจาก Pantry?\n\nประวัติการทำรายการจะไม่ถูกลบ`,
+    '🗑️ ยืนยันการลบ'
+  );
+  if(!confirmed) return;
   
   try {
     const store = tx('pantry', 'readwrite');
@@ -1099,10 +1257,14 @@ $('#btnImport').addEventListener('click', async ()=>{
   }
 });
 $('#btnWipe').addEventListener('click', async ()=>{
-  if(confirm('⚠️ Are you sure? This will permanently erase all local data!')){ 
+  const confirmed = await customConfirm(
+    '⚠️ การดำเนินการนี้จะลบข้อมูลทั้งหมดอย่างถาวร!\n\nคุณแน่ใจหรือไม่?',
+    '🗑️ ลบข้อมูลทั้งหมด'
+  );
+  if(confirmed){ 
     await clearAll(); 
     renderDashboard(); renderWeekLog(); renderPantry(); renderWaste(); 
-    showToast('All data has been erased', 'info');
+    showToast('✅ ลบข้อมูลทั้งหมดเรียบร้อยแล้ว', 'success');
   }
 });
 

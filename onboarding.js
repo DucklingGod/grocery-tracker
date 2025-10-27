@@ -425,8 +425,12 @@ class OnboardingTutorial {
     }
   }
 
-  skip() {
-    if (confirm('Are you sure you want to skip the tutorial? You can restart it from Settings.')) {
+  async skip() {
+    const confirmed = await customConfirm(
+      'คุณแน่ใจหรือไม่ที่จะข้ามการแนะนำ?\n\nคุณสามารถเริ่มใหม่ได้จาก Settings',
+      '❓ ข้ามการแนะนำ'
+    );
+    if (confirmed) {
       this.finish();
     }
   }
