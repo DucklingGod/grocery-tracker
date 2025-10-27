@@ -274,6 +274,23 @@ $('#quickForm').addEventListener('submit', async (e)=>{
     wasteReason: $('#qaReason').value || '',
     actionType: action || ''
   };
+  
+  // For Use/Waste actions, get price from pantry if not provided
+  if((action === 'Use' || action === 'Waste') && row.pricePerUnit === 0 && row.item){
+    const pantryItem = await getPantry(row.item);
+    if(pantryItem){
+      // Get the most recent price from weeklog for this item
+      const itemLogs = await getAll('weeklog');
+      const buyLogs = itemLogs
+        .filter(log => log.item === row.item && log.actionType === 'Buy' && log.pricePerUnit > 0)
+        .sort((a,b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
+      
+      if(buyLogs.length > 0){
+        row.pricePerUnit = buyLogs[0].pricePerUnit;
+        console.log(`📊 Using price from last purchase: ฿${row.pricePerUnit}/unit`);
+      }
+    }
+  }
 
   // Basic requirements by action
   if(action==='Buy' && (!row.item || !row.purchaseDate || !row.boughtQty)){
