@@ -7,86 +7,206 @@ class OnboardingTutorial {
       {
         target: '.brand',
         title: '👋 Welcome to Grocery Tracker!',
-        content: 'Track your groceries, reduce waste, and manage your pantry efficiently. Let\'s take a quick tour!',
-        position: 'bottom',
-        highlightNav: false
-      },
-      {
-        target: '[data-view="dashboard"]',
-        title: '📊 Dashboard',
-        content: 'See your spending, cooking costs, and waste metrics at a glance. Your grocery insights in one place!',
-        position: 'bottom',
-        highlightNav: true
-      },
-      {
-        target: '[data-view="quickadd"]',
-        title: '⚡ Quick Add',
-        content: 'The fastest way to log groceries! Buy, Use, or mark items as Waste. You can also scan barcodes!',
-        position: 'bottom',
-        highlightNav: true
-      },
-      {
-        target: '[data-view="pantry"]',
-        title: '🏪 Pantry',
-        content: 'View all items you have on hand, check expiration dates, and manage inventory levels.',
-        position: 'bottom',
-        highlightNav: true
-      },
-      {
-        target: '[data-view="weeklog"]',
-        title: '📝 Week Log',
-        content: 'Complete history of all your grocery activities - purchases, usage, and waste.',
-        position: 'bottom',
-        highlightNav: true
-      },
-      {
-        target: '[data-view="waste"]',
-        title: '🗑️ Waste Tracker',
-        content: 'Monitor what you\'re wasting and why. Get insights to reduce food waste over time.',
-        position: 'bottom',
-        highlightNav: true
-      },
-      {
-        target: '#qaItem',
-        title: '🛒 Let\'s Add Your First Item',
-        content: 'Start by entering an item name (e.g., "Milk" or "Chicken Breast"). Try the barcode scanner button for quick input!',
+        content: 'Track your groceries, reduce waste, and manage your pantry efficiently. Let\'s take a quick tour of all features!',
         position: 'bottom',
         highlightNav: false,
         beforeShow: () => {
-          // Switch to Quick Add view
+          // Navigate to dashboard first
+          const dashboardBtn = document.querySelector('[data-view="dashboard"]');
+          if (dashboardBtn) dashboardBtn.click();
+        }
+      },
+      {
+        target: '.kpis',
+        title: '📊 Key Metrics Dashboard',
+        content: 'At a glance: Total spending, cooking costs, waste amounts, and inventory alerts. Click any KPI for details!',
+        position: 'bottom',
+        highlightNav: false,
+        beforeShow: () => {
+          const dashboardBtn = document.querySelector('[data-view="dashboard"]');
+          if (dashboardBtn) dashboardBtn.click();
+        }
+      },
+      {
+        target: '#dailyCookChart',
+        title: '📈 Daily Cooking Costs',
+        content: 'Track how much you spend on cooking each day. Helps you budget and plan meals efficiently.',
+        position: 'top',
+        highlightNav: false
+      },
+      {
+        target: '#weekShopChart',
+        title: '🛒 Weekly Shopping Trends',
+        content: 'See your shopping patterns week by week. Identify spending spikes and adjust your budget.',
+        position: 'top',
+        highlightNav: false
+      },
+      {
+        target: '#topCatChart',
+        title: '� Top Categories',
+        content: 'Your biggest spending categories. Know where your money goes - meat, vegetables, snacks, etc.',
+        position: 'top',
+        highlightNav: false
+      },
+      {
+        target: '#recentActivity',
+        title: '📝 Recent Activity',
+        content: 'Your latest grocery actions at a glance. Quick overview of recent purchases, usage, and waste.',
+        position: 'top',
+        highlightNav: false
+      },
+      {
+        target: '[data-view="quickadd"]',
+        title: '⚡ Quick Add - Your Main Tool',
+        content: 'The heart of the app! Log all your grocery activities here: Buy new items, Use them, or mark as Waste.',
+        position: 'bottom',
+        highlightNav: true,
+        beforeShow: () => {
           const quickAddBtn = document.querySelector('[data-view="quickadd"]');
           if (quickAddBtn) quickAddBtn.click();
         }
       },
       {
-        target: '#qaAction',
-        title: '📦 Choose an Action',
-        content: 'Select "Buy" when purchasing groceries, "Use" when consuming them, or "Waste" if discarding.',
+        target: '#qaItem',
+        title: '� Item Name',
+        content: 'Enter what you bought (e.g., "Milk", "Chicken"). See the 📷 barcode button? Scan products instantly!',
         position: 'bottom',
         highlightNav: false
+      },
+      {
+        target: '#scanBarcodeBtn',
+        title: '📷 Barcode Scanner',
+        content: 'Scan product barcodes to auto-fill names and details from a database of 3+ million products!',
+        position: 'bottom',
+        highlightNav: false
+      },
+      {
+        target: '#qaCategory',
+        title: '🏷️ Categories',
+        content: 'Organize items by category: Meat, Vegetables, Dairy, Snacks, etc. Makes tracking easier!',
+        position: 'bottom',
+        highlightNav: false
+      },
+      {
+        target: '#qaAction',
+        title: '📦 Action Type',
+        content: 'Choose what you\'re doing: "Buy" = purchasing, "Use" = consuming, "Waste" = throwing away.',
+        position: 'bottom',
+        highlightNav: false
+      },
+      {
+        target: '#buyFields',
+        title: '💰 Purchase Details',
+        content: 'When buying: Enter quantity, price, unit (kg, pack, bottle). The app calculates price per unit automatically!',
+        position: 'top',
+        highlightNav: false,
+        beforeShow: () => {
+          const actionSelect = document.querySelector('#qaAction');
+          if (actionSelect) {
+            actionSelect.value = 'Buy';
+            actionSelect.dispatchEvent(new Event('change'));
+          }
+        }
       },
       {
         target: 'button[type="submit"]',
         title: '✅ Save Your Entry',
-        content: 'Click Save to record your grocery activity. You\'ll see a satisfying checkmark animation!',
+        content: 'Click Save to record. Watch for the satisfying checkmark animation! All data is saved locally.',
         position: 'top',
         highlightNav: false
       },
       {
+        target: '[data-view="pantry"]',
+        title: '🏪 Pantry - Your Inventory',
+        content: 'See everything you have on hand. Check quantities, expiration dates, and resupply alerts.',
+        position: 'bottom',
+        highlightNav: true,
+        beforeShow: () => {
+          const pantryBtn = document.querySelector('[data-view="pantry"]');
+          if (pantryBtn) pantryBtn.click();
+        }
+      },
+      {
+        target: '#searchPantry',
+        title: '� Smart Search',
+        content: 'Find items instantly! Search by name, filter by category. Works on all tables throughout the app.',
+        position: 'bottom',
+        highlightNav: false
+      },
+      {
+        target: '.table',
+        title: '📋 Pantry Actions',
+        content: 'For each item: "Use" to consume, "Adjust" to fix quantities, "Remove" to delete. Easy inventory management!',
+        position: 'top',
+        highlightNav: false
+      },
+      {
+        target: '[data-view="weeklog"]',
+        title: '📝 Week Log - Full History',
+        content: 'Complete record of ALL activities. See every purchase, usage, and waste event with dates and prices.',
+        position: 'bottom',
+        highlightNav: true,
+        beforeShow: () => {
+          const weeklogBtn = document.querySelector('[data-view="weeklog"]');
+          if (weeklogBtn) weeklogBtn.click();
+        }
+      },
+      {
+        target: '[data-view="waste"]',
+        title: '🗑️ Waste Tracker',
+        content: 'Monitor food waste. See what you\'re throwing away, why, and how much it costs. Reduce waste over time!',
+        position: 'bottom',
+        highlightNav: true,
+        beforeShow: () => {
+          const wasteBtn = document.querySelector('[data-view="waste"]');
+          if (wasteBtn) wasteBtn.click();
+        }
+      },
+      {
+        target: '[data-view="ai"]',
+        title: '🤖 AI Assistant (Optional)',
+        content: 'Chat with AI about your grocery data! Get insights, recipe suggestions, and shopping tips.',
+        position: 'bottom',
+        highlightNav: true,
+        beforeShow: () => {
+          const aiBtn = document.querySelector('[data-view="ai"]');
+          if (aiBtn) aiBtn.click();
+        }
+      },
+      {
+        target: '[data-view="settings"]',
+        title: '⚙️ Settings & Sync',
+        content: 'Export data, sync with household members, change language, or restart this tutorial anytime!',
+        position: 'bottom',
+        highlightNav: true,
+        beforeShow: () => {
+          const settingsBtn = document.querySelector('[data-view="settings"]');
+          if (settingsBtn) settingsBtn.click();
+        }
+      },
+      {
         target: '.hamburger',
         title: '📱 Mobile Navigation',
-        content: 'On mobile? Tap the hamburger menu (☰) to access all sections quickly.',
+        content: 'On mobile? Tap the hamburger menu (☰) to access all sections. Swipe-friendly interface!',
         position: 'bottom',
         highlightNav: false,
-        mobileOnly: true
+        mobileOnly: true,
+        beforeShow: () => {
+          const dashboardBtn = document.querySelector('[data-view="dashboard"]');
+          if (dashboardBtn) dashboardBtn.click();
+        }
       },
       {
         target: '.topbar',
-        title: '🎉 You\'re All Set!',
-        content: 'Start tracking your groceries now! Use keyboard shortcuts (Alt+1-6) for quick navigation. Enjoy!',
+        title: '🎉 You\'re Ready to Go!',
+        content: 'You\'ve seen all features! Pro tip: Use Alt+1-6 for quick navigation. Start tracking and reduce waste! 🌱',
         position: 'bottom',
         highlightNav: false,
-        isLast: true
+        isLast: true,
+        beforeShow: () => {
+          const dashboardBtn = document.querySelector('[data-view="dashboard"]');
+          if (dashboardBtn) dashboardBtn.click();
+        }
       }
     ];
     this.overlay = null;
@@ -94,10 +214,12 @@ class OnboardingTutorial {
   }
 
   start() {
-    // Check if user has seen the tutorial
-    if (localStorage.getItem('onboardingCompleted') === 'true') {
+    // Always start fresh, even if completed before (for restart)
+    // Check only if not manually restarting
+    if (localStorage.getItem('onboardingCompleted') === 'true' && !this.isRestarting) {
       return;
     }
+    this.isRestarting = false;
 
     this.currentStep = 0;
     this.createOverlay();
@@ -283,8 +405,34 @@ class OnboardingTutorial {
   }
 
   restart() {
+    // Clean up existing tutorial if running
+    if (this.overlay) {
+      this.overlay.remove();
+      this.overlay = null;
+    }
+    if (this.tooltip) {
+      this.tooltip.remove();
+      this.tooltip = null;
+    }
+    
+    // Remove all highlights
+    document.querySelectorAll('.onboarding-highlight').forEach(el => {
+      el.classList.remove('onboarding-highlight');
+    });
+    
+    // Reset state
     localStorage.removeItem('onboardingCompleted');
-    this.start();
+    this.currentStep = 0;
+    this.isRestarting = true;
+    
+    // Navigate to dashboard first
+    const dashboardBtn = document.querySelector('[data-view="dashboard"]');
+    if (dashboardBtn) dashboardBtn.click();
+    
+    // Start tutorial after navigation
+    setTimeout(() => {
+      this.start();
+    }, 300);
   }
 }
 
