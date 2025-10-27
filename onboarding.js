@@ -28,23 +28,9 @@ class OnboardingTutorial {
         }
       },
       {
-        target: '#dailyCookChart',
-        title: '📈 Daily Cooking Costs',
-        content: 'Track how much you spend on cooking each day. Helps you budget and plan meals efficiently.',
-        position: 'top',
-        highlightNav: false
-      },
-      {
-        target: '#weekShopChart',
-        title: '🛒 Weekly Shopping Trends',
-        content: 'See your shopping patterns week by week. Identify spending spikes and adjust your budget.',
-        position: 'top',
-        highlightNav: false
-      },
-      {
-        target: '#topCatChart',
-        title: '🏆 Top Categories',
-        content: 'Your biggest spending categories. Know where your money goes - meat, vegetables, snacks, etc.',
+        target: '.grid',
+        title: '📈 Dashboard Charts',
+        content: 'Visual insights into your grocery habits: Daily cooking costs, weekly shopping trends, and category breakdowns. Charts update automatically as you add data!',
         position: 'top',
         highlightNav: false
       },
@@ -53,7 +39,14 @@ class OnboardingTutorial {
         title: '📝 Recent Activity',
         content: 'Your latest grocery actions at a glance. Quick overview of recent purchases, usage, and waste.',
         position: 'top',
-        highlightNav: false
+        highlightNav: false,
+        beforeShow: () => {
+          // If recentActivity doesn't exist, create a placeholder
+          if (!document.querySelector('#recentActivity')) {
+            const card = document.querySelector('.card:last-child');
+            if (card) card.id = 'recentActivity';
+          }
+        }
       },
       {
         target: '[data-view="quickadd"]',
