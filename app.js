@@ -1052,3 +1052,35 @@ function learnBarcodeFromFormSubmission(itemName, category, unit) {
   // Clear the last scanned barcode
   sessionStorage.removeItem('lastScannedBarcode');
 }
+
+// Service Worker Update Handler
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js').then(reg => {
+    console.log('Service Worker registered');
+    
+    // Check for updates every 10 seconds
+    setInterval(() => {
+      reg.update();
+    }, 10000);
+    
+    // Listen for new service worker
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      console.log('New Service Worker found!');
+      
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          console.log('New version available! Reloading...');
+          
+          // Show toast notification
+          showToast('🔄 อัพเดทแอปเวอร์ชั่นใหม่...', 'info');
+          
+          // Reload after 2 seconds
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        }
+      });
+    });
+  });
+}

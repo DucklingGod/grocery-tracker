@@ -1,4 +1,4 @@
-const CACHE_NAME = 'grocery-cache-v35';
+const CACHE_NAME = 'grocery-cache-v36';
 const ASSETS = [
   './',
   './index.html',
@@ -16,10 +16,18 @@ const ASSETS = [
   './NotoSansThai-Regular.ttf'
 ];
 self.addEventListener('install', e=>{
+  console.log('Service Worker: Installing v36...');
+  self.skipWaiting(); // Force immediate activation
   e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)));
 });
 self.addEventListener('activate', e=>{
-  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))));
+  console.log('Service Worker: Activating v36...');
+  e.waitUntil(
+    caches.keys().then(keys=>{
+      console.log('Service Worker: Deleting old caches:', keys.filter(k=>k!==CACHE_NAME));
+      return Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)));
+    }).then(()=> self.clients.claim()) // Take control immediately
+  );
 });
 self.addEventListener('fetch', e=>{
   e.respondWith(
