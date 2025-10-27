@@ -46,11 +46,15 @@ function openBarcodeScanner() {
       console.log('Camera started successfully');
       showToast('✓ Camera ready. Point at barcode...', 'info');
       
-      // Wait for video to be ready
-      video.addEventListener('loadedmetadata', () => {
+      // Store the handler reference so we can remove it later
+      const metadataHandler = () => {
         console.log('Video metadata loaded, starting detection...');
         startBarcodeDetection(video);
-      });
+      };
+      video._metadataHandler = metadataHandler;
+      
+      // Wait for video to be ready
+      video.addEventListener('loadedmetadata', metadataHandler);
     })
     .catch(err => {
       console.error('Camera access error:', err);
@@ -73,6 +77,19 @@ function closeBarcodeScanner() {
   
   console.log('Closing barcode scanner...');
   
+  // Stop Quagga if it's running
+  if (typeof Quagga !== 'undefined') {
+    try {
+      Quagga.stop();
+      // Also remove all event listeners to prevent memory leaks
+      Quagga.offDetected();
+      Quagga.offProcessed();
+      console.log('Stopped Quagga scanner');
+    } catch (err) {
+      console.log('Quagga stop error (may not be running):', err);
+    }
+  }
+  
   // Stop video stream
   if (stream) {
     stream.getTracks().forEach(track => {
@@ -84,6 +101,8 @@ function closeBarcodeScanner() {
   
   if (video) {
     video.srcObject = null;
+    // Remove the loadedmetadata event listener to prevent duplicates
+    video.removeEventListener('loadedmetadata', video._metadataHandler);
   }
   
   if (modal) {
