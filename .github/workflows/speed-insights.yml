@@ -1,0 +1,34 @@
+name: Speed Insights
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  speed-insights:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run Vercel Speed Insights
+        env:
+          TARGET_URL: ${{ secrets.PROD_URL }}
+        run: |
+          if [ -z "$TARGET_URL" ]; then echo "Set PROD_URL secret to your deployed URL (e.g. https://your-app.vercel.app)"; exit 1; fi
+          npx @vercel/speed-insights "$TARGET_URL" --output html --runs 3 --output-path ./speed-insights-report.html
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: speed-insights-report
+          path: ./speed-insights-report.html
