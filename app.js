@@ -1397,12 +1397,18 @@ class ContextMenu {
 
     // Long-press listener for mobile
     let touchStartX, touchStartY;
+    let isLongPress = false;
     
     row.addEventListener('touchstart', (e) => {
+      // Prevent iOS text selection callout
+      e.preventDefault();
+      
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
+      isLongPress = false;
       
       this.longPressTimer = setTimeout(() => {
+        isLongPress = true;
         row.classList.add('long-press-active');
         const actions = getActions(row);
         this.show(touchStartX, touchStartY, actions);
@@ -1412,7 +1418,7 @@ class ContextMenu {
           navigator.vibrate(50);
         }
       }, this.longPressDelay);
-    });
+    }, { passive: false });
 
     row.addEventListener('touchmove', (e) => {
       // Cancel long press if finger moves too much
@@ -1423,17 +1429,27 @@ class ContextMenu {
       if (deltaX > 10 || deltaY > 10) {
         clearTimeout(this.longPressTimer);
         row.classList.remove('long-press-active');
+        isLongPress = false;
       }
     });
 
-    row.addEventListener('touchend', () => {
+    row.addEventListener('touchend', (e) => {
       clearTimeout(this.longPressTimer);
       row.classList.remove('long-press-active');
-    });
+      
+      // If it was a long press, prevent click events
+      if (isLongPress) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      isLongPress = false;
+    }, { passive: false });
 
     row.addEventListener('touchcancel', () => {
       clearTimeout(this.longPressTimer);
       row.classList.remove('long-press-active');
+      isLongPress = false;
     });
   }
 }

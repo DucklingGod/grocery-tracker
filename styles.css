@@ -190,6 +190,14 @@ th{position:sticky;top:0;background:#0f172a;font-weight:600;color:#9ca3af;text-t
 th:hover{background:#1e293b}
 th.sortable::after{content:" ↕";opacity:.3}
 td{color:#cbd5e1}
+tbody tr{
+  user-select:none;
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  -webkit-touch-callout:none;
+  cursor:pointer;
+}
 tr:hover td{background:#0f172a}
 .empty-state{padding:40px;text-align:center;color:#6b7280}
 .empty-state-icon{font-size:48px;margin-bottom:12px;opacity:.3}
@@ -430,10 +438,16 @@ tr:hover td{background:#0f172a}
 
 .context-menu-item.danger{
   color:#dc2626;
+  font-weight:500;
 }
 
 .context-menu-item.danger:hover{
-  background:#fee;
+  background:#fee2e2;
+  color:#b91c1c;
+}
+
+.context-menu-item.danger:active{
+  background:#fecaca;
 }
 
 .context-menu-item .icon{
