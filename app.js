@@ -1055,28 +1055,23 @@ function learnBarcodeFromFormSubmission(itemName, category, unit) {
 
 // Service Worker Update Handler
 if ('serviceWorker' in navigator) {
-  // Unregister all old service workers first
-  navigator.serviceWorker.getRegistrations().then(registrations => {
-    const unregisterPromises = registrations.map(registration => {
-      console.log('Unregistering old service worker...');
-      return registration.unregister();
-    });
-    return Promise.all(unregisterPromises);
-  }).then(() => {
-    // Wait a bit to ensure cleanup is complete
-    return new Promise(resolve => setTimeout(resolve, 500));
-  }).then(() => {
-    // Register new service worker
-    return navigator.serviceWorker.register('service-worker.js');
-  }).then(reg => {
+  // Prevent reload loops - only allow one reload per session
+  const RELOAD_KEY = 'sw-reload-time';
+  const lastReload = sessionStorage.getItem(RELOAD_KEY);
+  const now = Date.now();
+  
+  // If reloaded less than 5 seconds ago, don't reload again
+  if (lastReload && (now - parseInt(lastReload)) < 5000) {
+    console.log('Skipping reload - too soon after last reload');
+  }
+  
+  navigator.serviceWorker.register('service-worker.js').then(reg => {
     console.log('Service Worker registered');
     
-    // Check for updates every 10 seconds (but not immediately)
+    // Check for updates every 30 seconds (not too aggressive)
     setInterval(() => {
-      if (reg.active) {
-        reg.update();
-      }
-    }, 10000);
+      reg.update();
+    }, 30000);
     
     // Listen for new service worker
     reg.addEventListener('updatefound', () => {
@@ -1087,17 +1082,24 @@ if ('serviceWorker' in navigator) {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
           console.log('New version available! Reloading...');
           
-          // Show toast notification
-          showToast('🔄 อัพเดทแอปเวอร์ชั่นใหม่...', 'info');
+          // Check if we recently reloaded
+          const lastReload = sessionStorage.getItem(RELOAD_KEY);
+          const now = Date.now();
           
-          // Reload after 2 seconds
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
-        } else if (newWorker.state === 'activated' && !navigator.serviceWorker.controller) {
-          // First time activation
-          console.log('Service Worker activated for the first time');
-          window.location.reload();
+          if (!lastReload || (now - parseInt(lastReload)) > 5000) {
+            // Show toast notification
+            showToast('🔄 อัพเดทแอปเวอร์ชั่นใหม่...', 'info');
+            
+            // Mark reload time
+            sessionStorage.setItem(RELOAD_KEY, now.toString());
+            
+            // Reload after 2 seconds
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          } else {
+            console.log('Skipping reload - too soon after last reload');
+          }
         }
       });
     });
